@@ -1,0 +1,36 @@
+{
+  "@@locale": "en",
+  "appTitle": "Catch the Metro",
+  "@appTitle": {
+    "description": "The application title, shown in the OS task switcher."
+  },
+  "stationLabel": "STATION",
+  "@stationLabel": {
+    "description": "Short plaque-style label shown above the play grid, styled like a metro station sign."
+  },
+  "scoreLabel": "Wagons: {count}",
+  "@scoreLabel": {
+    "description": "Score counter shown above the grid.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "collisionOuch": "Ouch!",
+  "@collisionOuch": {
+    "description": "Shown immediately after any collision (wall or self)."
+  },
+  "collisionNewChance": "New chance",
+  "@collisionNewChance": {
+    "description": "Shown right after the Ouch! message, just before the game resets."
+  },
+  "languageNameEnglish": "EN",
+  "@languageNameEnglish": {
+    "description": "Short label on the language-switch control for English."
+  },
+  "languageNameRomanian": "RO",
+  "@languageNameRomanian": {
+    "description": "Short label on the language-switch control for Romanian."
+  }
+}

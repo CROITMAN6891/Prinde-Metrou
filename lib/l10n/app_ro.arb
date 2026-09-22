@@ -1,0 +1,10 @@
+{
+  "@@locale": "ro",
+  "appTitle": "Prinde Metrou",
+  "stationLabel": "STAȚIE",
+  "scoreLabel": "Vagoane: {count}",
+  "collisionOuch": "Au!",
+  "collisionNewChance": "Șansă nouă",
+  "languageNameEnglish": "EN",
+  "languageNameRomanian": "RO"
+}
