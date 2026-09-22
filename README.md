@@ -1,17 +1,29 @@
-# prinde_metrou
+# Prinde Metrou
 
-A new Flutter project.
+Joc stil Snake tematizat cu metrou, făcut în Flutter: conduci un tren pe o
+grilă, colectezi vagoane, iar la coliziune trenul se înclină sau se
+rostogolește în funcție de marginea lovită.
 
-## Getting Started
+Repository: https://github.com/CROITMAN6891/Prinde-Metrou
 
-This project is a starting point for a Flutter application.
+## Funcționalități
 
-A few resources to get you started if this is your first Flutter project:
+- Control prin swipe pe 4 direcții
+- Creștere de tip Snake la fiecare vagon colectat
+- Animații de coliziune specifice direcției de impact (tilt lateral /
+  tumble sus-jos / shake la auto-coliziune)
+- Interfață localizată în română și engleză, selectabilă din aplicație
+- Banner AdMob subțire, poziționat fix
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Rulare locală
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```
+flutter pub get
+flutter run
+```
+
+## Teste
+
+```
+flutter test
+```
