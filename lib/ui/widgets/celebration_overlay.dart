@@ -7,9 +7,16 @@ import '../theme/metro_theme.dart';
 /// Short, non-blocking banner at the top of the grid for wagon milestones.
 /// Timing is owned by GameScreen.
 class CelebrationOverlay extends StatelessWidget {
-  const CelebrationOverlay({super.key, required this.celebration});
+  const CelebrationOverlay({
+    super.key,
+    required this.celebration,
+    this.unlockedSkin = false,
+  });
 
   final Celebration? celebration;
+
+  /// Adds a "new train color unlocked" line under the banner.
+  final bool unlockedSkin;
 
   @override
   Widget build(BuildContext context) {
@@ -35,19 +42,35 @@ class CelebrationOverlay extends StatelessWidget {
               ? const SizedBox.shrink(key: ValueKey('empty'))
               : Container(
                   key: ValueKey(celebration),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: MetroTheme.wagonColor,
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Text(
-                    message,
-                    style: const TextStyle(
-                      color: MetroTheme.background,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
-                    ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        message,
+                        style: const TextStyle(
+                          color: MetroTheme.background,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      if (unlockedSkin)
+                        Text(
+                          l10n.skinUnlocked,
+                          style: const TextStyle(
+                            color: MetroTheme.background,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
         ),

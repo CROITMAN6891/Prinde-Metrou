@@ -6,7 +6,11 @@ import '../theme/metro_theme.dart';
 /// Dims the grid and waits for a tap anywhere on it before the game
 /// resumes, so the player isn't surprised by a moving train on return.
 class PauseOverlay extends StatelessWidget {
-  const PauseOverlay({super.key, required this.visible, required this.onResume});
+  const PauseOverlay({
+    super.key,
+    required this.visible,
+    required this.onResume,
+  });
 
   final bool visible;
   final VoidCallback onResume;

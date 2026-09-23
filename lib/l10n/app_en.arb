@@ -99,5 +99,22 @@
   "celebrateLegend": "Legend!",
   "@celebrateLegend": {
     "description": "Flashed briefly at every 25-wagon milestone (25, 50, 75...)."
+  },
+  "skinPickerTitle": "Train color",
+  "@skinPickerTitle": {
+    "description": "Title of the train color picker sheet, and tooltip of the button that opens it."
+  },
+  "skinLocked": "Unlocks at {count} wagons",
+  "@skinLocked": {
+    "description": "Tooltip on a locked train color, naming the best-run wagon count needed.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "skinUnlocked": "New train color unlocked!",
+  "@skinUnlocked": {
+    "description": "Line shown under a celebration banner when that milestone unlocked a new train color."
   }
 }

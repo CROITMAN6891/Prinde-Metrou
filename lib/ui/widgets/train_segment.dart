@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../game/collision.dart';
+import '../../game/train_skin.dart';
 import '../theme/metro_theme.dart';
 
 /// Renders a single train segment (head or wagon) and, while a collision
@@ -14,6 +15,7 @@ class TrainSegment extends StatelessWidget {
     required this.isHead,
     required this.segmentIndex,
     required this.cellSize,
+    this.skin = TrainSkin.classic,
     this.collisionSide,
     this.collisionProgress,
   });
@@ -21,6 +23,7 @@ class TrainSegment extends StatelessWidget {
   final bool isHead;
   final int segmentIndex;
   final double cellSize;
+  final TrainSkin skin;
   final CollisionSide? collisionSide;
   final double? collisionProgress;
 
@@ -33,7 +36,7 @@ class TrainSegment extends StatelessWidget {
         padding: const EdgeInsets.all(1.5),
         child: Container(
           decoration: BoxDecoration(
-            color: isHead ? MetroTheme.trainHead : MetroTheme.trainBody,
+            color: isHead ? skin.head : skin.body,
             borderRadius: BorderRadius.circular(cellSize * 0.25),
             border: Border.all(color: MetroTheme.gridLine, width: 1),
           ),

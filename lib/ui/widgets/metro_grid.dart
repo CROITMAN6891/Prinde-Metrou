@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../game/game_state.dart';
+import '../../game/train_skin.dart';
 import '../theme/metro_theme.dart';
 import 'train_segment.dart';
 
@@ -9,10 +10,12 @@ class MetroGrid extends StatelessWidget {
     super.key,
     required this.gameState,
     required this.collisionAnimation,
+    required this.skin,
   });
 
   final GameState gameState;
   final Animation<double> collisionAnimation;
+  final TrainSkin skin;
 
   @override
   Widget build(BuildContext context) {
@@ -67,8 +70,13 @@ class MetroGrid extends StatelessWidget {
                           isHead: i == 0,
                           segmentIndex: i,
                           cellSize: cellSize,
-                          collisionSide: colliding ? gameState.lastCollisionSide : null,
-                          collisionProgress: colliding ? collisionAnimation.value : null,
+                          skin: skin,
+                          collisionSide: colliding
+                              ? gameState.lastCollisionSide
+                              : null,
+                          collisionProgress: colliding
+                              ? collisionAnimation.value
+                              : null,
                         ),
                       ),
                   ],

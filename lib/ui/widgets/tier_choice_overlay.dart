@@ -6,10 +6,10 @@ import '../theme/metro_theme.dart';
 
 extension SpeedTierLabel on SpeedTier {
   String label(AppLocalizations l10n) => switch (this) {
-        SpeedTier.light => l10n.tierLight,
-        SpeedTier.medium => l10n.tierMedium,
-        SpeedTier.hard => l10n.tierHard,
-      };
+    SpeedTier.light => l10n.tierLight,
+    SpeedTier.medium => l10n.tierMedium,
+    SpeedTier.hard => l10n.tierHard,
+  };
 }
 
 /// Shown at each 25-wagon milestone while a faster tier exists: the game is

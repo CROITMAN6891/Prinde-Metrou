@@ -5,6 +5,7 @@ import '../../game/game_controller.dart';
 import '../../game/game_state.dart';
 import '../../game/progress_store.dart';
 import '../../game/progression.dart';
+import '../../game/train_skin.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../l10n/locale_controller.dart';
 import '../theme/metro_theme.dart';
@@ -14,6 +15,7 @@ import '../widgets/collision_overlay.dart';
 import '../widgets/language_switcher.dart';
 import '../widgets/metro_grid.dart';
 import '../widgets/pause_overlay.dart';
+import '../widgets/skin_picker.dart';
 import '../widgets/tier_choice_overlay.dart';
 
 class GameScreen extends StatefulWidget {
@@ -38,12 +40,15 @@ class _GameScreenState extends State<GameScreen>
 
   CollisionMessageKind? _collisionMessage;
   Celebration? _celebration;
+  bool _celebrationUnlockedSkin = false;
+  late TrainSkin _skin;
   int _celebrationGeneration = 0;
   int _lastScore = 0;
 
   @override
   void initState() {
     super.initState();
+    _skin = widget.progressStore.skin;
     _gameState = GameState(tier: widget.progressStore.tier);
     _gameController = GameController(
       _gameState,
@@ -69,8 +74,11 @@ class _GameScreenState extends State<GameScreen>
 
   void _onGameStateChanged() {
     if (_gameState.score > _lastScore) {
+      final unlocked = widget.progressStore.recordScore(_gameState.score);
       final celebration = celebrationFor(_gameState.score);
-      if (celebration != null) _showCelebration(celebration);
+      if (celebration != null) {
+        _showCelebration(celebration, unlockedSkin: unlocked.isNotEmpty);
+      }
     }
     _lastScore = _gameState.score;
 
@@ -79,9 +87,15 @@ class _GameScreenState extends State<GameScreen>
     }
   }
 
-  Future<void> _showCelebration(Celebration celebration) async {
+  Future<void> _showCelebration(
+    Celebration celebration, {
+    required bool unlockedSkin,
+  }) async {
     final generation = ++_celebrationGeneration;
-    setState(() => _celebration = celebration);
+    setState(() {
+      _celebration = celebration;
+      _celebrationUnlockedSkin = unlockedSkin;
+    });
     await _delayRespectingPause(GameConstants.celebrationMessageDuration);
     // A newer celebration (or a collision) may have replaced this one.
     if (!mounted || generation != _celebrationGeneration) return;
@@ -104,6 +118,18 @@ class _GameScreenState extends State<GameScreen>
     setState(() => _collisionMessage = null);
     _collisionController.reset();
     _gameController.resumeAfterCollision();
+  }
+
+  Future<void> _openSkinPicker() async {
+    _gameController.pause();
+    final chosen = await SkinPicker.show(
+      context,
+      selected: _skin,
+      bestScore: widget.progressStore.bestScore,
+    );
+    if (!mounted || chosen == null) return;
+    setState(() => _skin = chosen);
+    widget.progressStore.saveSkin(chosen);
   }
 
   /// Waits [duration], then holds for as long as the game is paused, so a
@@ -134,7 +160,15 @@ class _GameScreenState extends State<GameScreen>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const SizedBox(width: 48), // balances the switcher's width
+                  SizedBox(
+                    width: 48, // balances the switcher's width
+                    child: IconButton(
+                      tooltip: l10n.skinPickerTitle,
+                      icon: const Icon(Icons.palette_outlined),
+                      color: MetroTheme.wagonColor,
+                      onPressed: _openSkinPicker,
+                    ),
+                  ),
                   AnimatedBuilder(
                     animation: _gameState,
                     builder: (context, _) => Text(
@@ -153,7 +187,8 @@ class _GameScreenState extends State<GameScreen>
             AnimatedBuilder(
               animation: _gameState,
               builder: (context, _) => _StationPlaque(
-                label: '${l10n.stationLabel} · '
+                label:
+                    '${l10n.stationLabel} · '
                     '${_gameState.tier.label(l10n).toUpperCase()}',
               ),
             ),
@@ -169,11 +204,15 @@ class _GameScreenState extends State<GameScreen>
                       child: MetroGrid(
                         gameState: _gameState,
                         collisionAnimation: _collisionController,
+                        skin: _skin,
                       ),
                     ),
                     CollisionOverlay(kind: _collisionMessage),
                     Positioned.fill(
-                      child: CelebrationOverlay(celebration: _celebration),
+                      child: CelebrationOverlay(
+                        celebration: _celebration,
+                        unlockedSkin: _celebrationUnlockedSkin,
+                      ),
                     ),
                     Positioned.fill(
                       child: AnimatedBuilder(
@@ -182,7 +221,7 @@ class _GameScreenState extends State<GameScreen>
                           // Let the milestone celebration play out first.
                           visible:
                               _gameState.phase == GamePhase.choosingTier &&
-                                  _celebration == null,
+                              _celebration == null,
                           score: _gameState.score,
                           tier: _gameState.tier,
                           onChoose: _gameController.chooseTier,

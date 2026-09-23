@@ -7,6 +7,7 @@ import 'package:prinde_metrou/game/game_controller.dart';
 import 'package:prinde_metrou/game/game_state.dart';
 import 'package:prinde_metrou/game/progress_store.dart';
 import 'package:prinde_metrou/game/progression.dart';
+import 'package:prinde_metrou/game/train_skin.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -19,8 +20,7 @@ void main() {
       expect(state.phase, GamePhase.playing);
     });
 
-    test(
-        'queued direction is applied on the next tick, ignoring reversal '
+    test('queued direction is applied on the next tick, ignoring reversal '
         'once the train has grown', () {
       final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
       final head = state.head;
@@ -243,6 +243,37 @@ void main() {
         75: Celebration.legend,
         100: Celebration.legend,
       });
+    });
+  });
+
+  group('Train skins', () {
+    test('unlock by best score and report only newly unlocked ones', () async {
+      SharedPreferences.setMockInitialValues({});
+      final store = await ProgressStore.load();
+      expect(store.skin, TrainSkin.classic);
+
+      expect(store.recordScore(4), isEmpty);
+      expect(store.recordScore(5).map((s) => s.id), ['emerald']);
+      expect(store.recordScore(5), isEmpty, reason: 'not a new best');
+      expect(store.recordScore(3), isEmpty, reason: 'lower run');
+      expect(store.bestScore, 5);
+      expect(store.recordScore(25).map((s) => s.id), [
+        'ocean',
+        'violet',
+        'legend',
+      ]);
+    });
+
+    test('selected skin persists, but falls back if still locked', () async {
+      SharedPreferences.setMockInitialValues({});
+      final store = await ProgressStore.load();
+      final legend = TrainSkin.byId('legend');
+
+      await store.saveSkin(legend);
+      expect(store.skin, TrainSkin.classic, reason: 'best is still 0');
+
+      store.recordScore(25);
+      expect((await ProgressStore.load()).skin, legend);
     });
   });
 }
