@@ -10,6 +10,7 @@ import '../widgets/ad_banner.dart';
 import '../widgets/collision_overlay.dart';
 import '../widgets/language_switcher.dart';
 import '../widgets/metro_grid.dart';
+import '../widgets/pause_overlay.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key, required this.localeController});
@@ -21,7 +22,7 @@ class GameScreen extends StatefulWidget {
 }
 
 class _GameScreenState extends State<GameScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late final GameState _gameState;
   late final GameController _gameController;
   late final AnimationController _collisionController;
@@ -38,7 +39,17 @@ class _GameScreenState extends State<GameScreen>
       duration: GameConstants.collisionAnimationDuration,
     );
     _gameState.addListener(_onGameStateChanged);
+    WidgetsBinding.instance.addObserver(this);
     _gameController.start();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Pause on any loss of foreground. Coming back (resumed) deliberately
+    // does NOT unpause: the player taps the pause overlay when ready.
+    if (state != AppLifecycleState.resumed) {
+      _gameController.pause();
+    }
   }
 
   void _onGameStateChanged() {
@@ -51,18 +62,26 @@ class _GameScreenState extends State<GameScreen>
     setState(() => _collisionMessage = CollisionMessageKind.ouch);
     await _collisionController.forward(from: 0);
     if (!mounted) return;
-    await Future<void>.delayed(GameConstants.ouchMessageDuration);
+    await _delayRespectingPause(GameConstants.ouchMessageDuration);
     if (!mounted) return;
     setState(() => _collisionMessage = CollisionMessageKind.newChance);
-    await Future<void>.delayed(GameConstants.newChanceMessageDuration);
+    await _delayRespectingPause(GameConstants.newChanceMessageDuration);
     if (!mounted) return;
     setState(() => _collisionMessage = null);
     _collisionController.reset();
     _gameController.resumeAfterCollision();
   }
 
+  /// Waits [duration], then holds for as long as the game is paused, so a
+  /// timed sequence never advances while the app is in the background.
+  Future<void> _delayRespectingPause(Duration duration) async {
+    await Future<void>.delayed(duration);
+    await _gameController.waitUntilResumed();
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _gameState.removeListener(_onGameStateChanged);
     _gameController.dispose();
     _collisionController.dispose();
@@ -113,6 +132,15 @@ class _GameScreenState extends State<GameScreen>
                       ),
                     ),
                     CollisionOverlay(kind: _collisionMessage),
+                    Positioned.fill(
+                      child: AnimatedBuilder(
+                        animation: _gameState,
+                        builder: (context, _) => PauseOverlay(
+                          visible: _gameState.isPaused,
+                          onResume: _gameController.resume,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

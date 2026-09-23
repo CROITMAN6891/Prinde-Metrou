@@ -6,5 +6,7 @@
   "collisionOuch": "Au!",
   "collisionNewChance": "Șansă nouă",
   "languageNameEnglish": "EN",
-  "languageNameRomanian": "RO"
+  "languageNameRomanian": "RO",
+  "pausedTitle": "Pauză",
+  "tapToContinue": "Atinge pentru a continua"
 }

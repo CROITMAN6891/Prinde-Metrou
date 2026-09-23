@@ -11,9 +11,11 @@ class GameController {
 
   final GameState gameState;
   Timer? _ticker;
+  Completer<void>? _resumed;
 
   void start() {
     _ticker?.cancel();
+    if (gameState.isPaused) return;
     _ticker = Timer.periodic(GameConstants.tickInterval, (_) {
       gameState.tick();
       if (gameState.phase != GamePhase.playing) {
@@ -26,6 +28,26 @@ class GameController {
     gameState.reset();
     start();
   }
+
+  /// Freezes the train exactly where it is. Safe to call repeatedly.
+  void pause() {
+    _ticker?.cancel();
+    if (gameState.isPaused) return;
+    _resumed = Completer<void>();
+    gameState.pause();
+  }
+
+  void resume() {
+    if (!gameState.isPaused) return;
+    gameState.resume();
+    _resumed?.complete();
+    _resumed = null;
+    if (gameState.phase == GamePhase.playing) start();
+  }
+
+  /// Completes immediately when running, otherwise once [resume] is called.
+  /// Lets timed sequences (e.g. the collision messages) hold while paused.
+  Future<void> waitUntilResumed() => _resumed?.future ?? Future.value();
 
   void onSwipeEnd(DragEndDetails details) {
     final velocity = details.velocity.pixelsPerSecond;

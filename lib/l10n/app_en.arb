@@ -32,5 +32,13 @@
   "languageNameRomanian": "RO",
   "@languageNameRomanian": {
     "description": "Short label on the language-switch control for Romanian."
+  },
+  "pausedTitle": "Paused",
+  "@pausedTitle": {
+    "description": "Title shown over the grid while the game is paused (e.g. after the app was sent to the background)."
+  },
+  "tapToContinue": "Tap to continue",
+  "@tapToContinue": {
+    "description": "Hint under the pause title; tapping the grid resumes the game."
   }
 }

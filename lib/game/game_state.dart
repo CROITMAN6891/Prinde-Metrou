@@ -25,16 +25,20 @@ class GameState extends ChangeNotifier {
   GamePhase phase = GamePhase.playing;
   CollisionSide? lastCollisionSide;
 
+  /// Orthogonal to [phase]: the game can be paused mid-play, mid-collision
+  /// or while a choice screen is up, and resumes into the same phase.
+  bool isPaused = false;
+
   GridPosition get head => segments.first;
 
   void queueDirection(Direction newDirection) {
-    if (phase != GamePhase.playing) return;
+    if (phase != GamePhase.playing || isPaused) return;
     if (newDirection == direction.opposite && segments.length > 1) return;
     _queuedDirection = newDirection;
   }
 
   void tick() {
-    if (phase != GamePhase.playing) return;
+    if (phase != GamePhase.playing || isPaused) return;
 
     if (_queuedDirection != null) {
       direction = _queuedDirection!;
@@ -75,6 +79,18 @@ class GameState extends ChangeNotifier {
   void _collide(CollisionSide side) {
     phase = GamePhase.colliding;
     lastCollisionSide = side;
+    notifyListeners();
+  }
+
+  void pause() {
+    if (isPaused) return;
+    isPaused = true;
+    notifyListeners();
+  }
+
+  void resume() {
+    if (!isPaused) return;
+    isPaused = false;
     notifyListeners();
   }
 

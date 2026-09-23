@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prinde_metrou/core/grid.dart';
 import 'package:prinde_metrou/game/collision.dart';
+import 'package:prinde_metrou/game/game_controller.dart';
 import 'package:prinde_metrou/game/game_state.dart';
 
 void main() {
@@ -107,6 +110,42 @@ void main() {
 
       expect(state.phase, GamePhase.colliding);
       expect(state.lastCollisionSide, CollisionSide.self);
+    });
+  });
+
+  group('Pause', () {
+    test('paused state ignores ticks and direction changes', () {
+      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      final head = state.head;
+      state.pause();
+
+      state.queueDirection(Direction.down);
+      state.tick();
+
+      expect(state.head, head);
+      state.resume();
+      state.tick();
+      expect(state.head, GridPosition(head.row, head.col + 1));
+      expect(state.direction, Direction.right);
+    });
+
+    test('controller holds waitUntilResumed until resume()', () async {
+      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      final controller = GameController(state);
+      var released = false;
+
+      controller.pause();
+      controller.pause(); // idempotent
+      unawaited(controller.waitUntilResumed().then((_) => released = true));
+      await Future<void>.delayed(Duration.zero);
+      expect(released, isFalse);
+      expect(state.isPaused, isTrue);
+
+      controller.resume();
+      await Future<void>.delayed(Duration.zero);
+      expect(released, isTrue);
+      expect(state.isPaused, isFalse);
+      controller.dispose();
     });
   });
 }
