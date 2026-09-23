@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prinde_metrou/core/grid.dart';
 import 'package:prinde_metrou/game/collision.dart';
@@ -274,6 +275,59 @@ void main() {
 
       store.recordScore(25);
       expect((await ProgressStore.load()).skin, legend);
+    });
+  });
+
+  group('Swipe detection', () {
+    void drag(GameController controller, List<Offset> deltas) {
+      controller.onSwipeStart(DragStartDetails());
+      for (final delta in deltas) {
+        controller.onSwipeUpdate(
+          DragUpdateDetails(globalPosition: Offset.zero, delta: delta),
+        );
+      }
+    }
+
+    test('a rightward swipe that hooks back at lift-off stays right', () {
+      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      state.direction = Direction.up;
+      final controller = GameController(state);
+
+      drag(controller, const [
+        Offset(10, -4),
+        Offset(12, -3),
+        Offset(8, 2),
+        Offset(-15, 1), // finger recoils as it lifts
+        Offset(-20, 0),
+      ]);
+      state.tick();
+
+      expect(state.direction, Direction.right);
+    });
+
+    test('diagonal swipes resolve by the dominant axis of travel', () {
+      expect(
+        GameController.directionForSwipe(const Offset(30, -20)),
+        Direction.right,
+      );
+      expect(
+        GameController.directionForSwipe(const Offset(-18, 25)),
+        Direction.down,
+      );
+      expect(
+        GameController.directionForSwipe(const Offset(-30, -29)),
+        Direction.left,
+      );
+    });
+
+    test('tiny drags below the threshold are ignored', () {
+      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      final controller = GameController(state);
+
+      drag(controller, const [Offset(0, 5), Offset(0, 6)]);
+      state.tick();
+
+      expect(state.direction, Direction.right);
     });
   });
 }

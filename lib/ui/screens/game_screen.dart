@@ -195,7 +195,8 @@ class _GameScreenState extends State<GameScreen>
             Expanded(
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onPanEnd: _gameController.onSwipeEnd,
+                onPanStart: _gameController.onSwipeStart,
+                onPanUpdate: _gameController.onSwipeUpdate,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [

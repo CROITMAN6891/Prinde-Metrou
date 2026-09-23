@@ -10,5 +10,6 @@ class GameConstants {
   static const Duration newChanceMessageDuration = Duration(milliseconds: 700);
   static const Duration celebrationMessageDuration =
       Duration(milliseconds: 1100);
-  static const double swipeVelocityThreshold = 150;
+  /// Finger travel (logical px) after which a drag counts as a swipe.
+  static const double swipeDistanceThreshold = 24;
 }
