@@ -18,3 +18,14 @@ enum SpeedTier {
 
 bool isTierMilestone(int score) =>
     score > 0 && score % tierMilestoneInterval == 0;
+
+enum Celebration { goodJob, perfect, incredible, legend }
+
+/// The message to flash when the run's score becomes [score], if any.
+Celebration? celebrationFor(int score) => switch (score) {
+      5 => Celebration.goodJob,
+      10 => Celebration.perfect,
+      15 => Celebration.incredible,
+      _ when isTierMilestone(score) => Celebration.legend,
+      _ => null,
+    };

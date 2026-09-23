@@ -227,4 +227,22 @@ void main() {
       expect(reloaded.tier, SpeedTier.medium);
     });
   });
+
+  group('Celebrations', () {
+    test('fire exactly at 5, 10, 15 and every multiple of 25', () {
+      final fired = {
+        for (var score = 0; score <= 100; score++)
+          if (celebrationFor(score) != null) score: celebrationFor(score),
+      };
+      expect(fired, {
+        5: Celebration.goodJob,
+        10: Celebration.perfect,
+        15: Celebration.incredible,
+        25: Celebration.legend,
+        50: Celebration.legend,
+        75: Celebration.legend,
+        100: Celebration.legend,
+      });
+    });
+  });
 }

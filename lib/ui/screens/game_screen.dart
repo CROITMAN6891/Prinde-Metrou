@@ -4,10 +4,12 @@ import '../../core/constants.dart';
 import '../../game/game_controller.dart';
 import '../../game/game_state.dart';
 import '../../game/progress_store.dart';
+import '../../game/progression.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../l10n/locale_controller.dart';
 import '../theme/metro_theme.dart';
 import '../widgets/ad_banner.dart';
+import '../widgets/celebration_overlay.dart';
 import '../widgets/collision_overlay.dart';
 import '../widgets/language_switcher.dart';
 import '../widgets/metro_grid.dart';
@@ -35,6 +37,9 @@ class _GameScreenState extends State<GameScreen>
   late final AnimationController _collisionController;
 
   CollisionMessageKind? _collisionMessage;
+  Celebration? _celebration;
+  int _celebrationGeneration = 0;
+  int _lastScore = 0;
 
   @override
   void initState() {
@@ -63,13 +68,32 @@ class _GameScreenState extends State<GameScreen>
   }
 
   void _onGameStateChanged() {
+    if (_gameState.score > _lastScore) {
+      final celebration = celebrationFor(_gameState.score);
+      if (celebration != null) _showCelebration(celebration);
+    }
+    _lastScore = _gameState.score;
+
     if (_gameState.phase == GamePhase.colliding && _collisionMessage == null) {
       _playCollisionSequence();
     }
   }
 
+  Future<void> _showCelebration(Celebration celebration) async {
+    final generation = ++_celebrationGeneration;
+    setState(() => _celebration = celebration);
+    await _delayRespectingPause(GameConstants.celebrationMessageDuration);
+    // A newer celebration (or a collision) may have replaced this one.
+    if (!mounted || generation != _celebrationGeneration) return;
+    setState(() => _celebration = null);
+  }
+
   Future<void> _playCollisionSequence() async {
-    setState(() => _collisionMessage = CollisionMessageKind.ouch);
+    _celebrationGeneration++;
+    setState(() {
+      _celebration = null;
+      _collisionMessage = CollisionMessageKind.ouch;
+    });
     await _collisionController.forward(from: 0);
     if (!mounted) return;
     await _delayRespectingPause(GameConstants.ouchMessageDuration);
@@ -149,11 +173,16 @@ class _GameScreenState extends State<GameScreen>
                     ),
                     CollisionOverlay(kind: _collisionMessage),
                     Positioned.fill(
+                      child: CelebrationOverlay(celebration: _celebration),
+                    ),
+                    Positioned.fill(
                       child: AnimatedBuilder(
                         animation: _gameState,
                         builder: (context, _) => TierChoiceOverlay(
+                          // Let the milestone celebration play out first.
                           visible:
-                              _gameState.phase == GamePhase.choosingTier,
+                              _gameState.phase == GamePhase.choosingTier &&
+                                  _celebration == null,
                           score: _gameState.score,
                           tier: _gameState.tier,
                           onChoose: _gameController.chooseTier,

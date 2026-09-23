@@ -15,5 +15,9 @@
   "tierChoiceTitle": "{count} vagoane!",
   "tierCurrent": "Viteza curentă: {tier}",
   "tierAdvance": "Continuă la nivelul următor ({tier})",
-  "tierStay": "Încearcă mai departe la acest nivel"
+  "tierStay": "Încearcă mai departe la acest nivel",
+  "celebrateGoodJob": "Bine!",
+  "celebratePerfect": "Perfect!",
+  "celebrateIncredible": "Incredibil!",
+  "celebrateLegend": "Legendă!"
 }

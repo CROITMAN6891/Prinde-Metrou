@@ -83,5 +83,21 @@
   "tierStay": "Keep going at this level",
   "@tierStay": {
     "description": "Button that keeps the current speed tier and resumes play."
+  },
+  "celebrateGoodJob": "Good job!",
+  "@celebrateGoodJob": {
+    "description": "Flashed briefly when the run reaches 5 wagons."
+  },
+  "celebratePerfect": "Perfect!",
+  "@celebratePerfect": {
+    "description": "Flashed briefly when the run reaches 10 wagons."
+  },
+  "celebrateIncredible": "Incredible!",
+  "@celebrateIncredible": {
+    "description": "Flashed briefly when the run reaches 15 wagons."
+  },
+  "celebrateLegend": "Legend!",
+  "@celebrateLegend": {
+    "description": "Flashed briefly at every 25-wagon milestone (25, 50, 75...)."
   }
 }

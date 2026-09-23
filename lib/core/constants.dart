@@ -8,5 +8,7 @@ class GameConstants {
       Duration(milliseconds: 550);
   static const Duration ouchMessageDuration = Duration(milliseconds: 700);
   static const Duration newChanceMessageDuration = Duration(milliseconds: 700);
+  static const Duration celebrationMessageDuration =
+      Duration(milliseconds: 1100);
   static const double swipeVelocityThreshold = 150;
 }
