@@ -40,5 +40,48 @@
   "tapToContinue": "Tap to continue",
   "@tapToContinue": {
     "description": "Hint under the pause title; tapping the grid resumes the game."
+  },
+  "tierLight": "Light",
+  "@tierLight": {
+    "description": "Name of the slowest speed tier."
+  },
+  "tierMedium": "Medium",
+  "@tierMedium": {
+    "description": "Name of the middle speed tier."
+  },
+  "tierHard": "Hard",
+  "@tierHard": {
+    "description": "Name of the fastest speed tier."
+  },
+  "tierChoiceTitle": "{count} wagons!",
+  "@tierChoiceTitle": {
+    "description": "Title of the screen shown at every 25-wagon milestone, offering a faster speed tier.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tierCurrent": "Current speed: {tier}",
+  "@tierCurrent": {
+    "description": "Shows the current speed tier name on the milestone screen.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "tierAdvance": "Continue to the next level ({tier})",
+  "@tierAdvance": {
+    "description": "Button that moves the player up to the next, faster speed tier.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "tierStay": "Keep going at this level",
+  "@tierStay": {
+    "description": "Button that keeps the current speed tier and resumes play."
   }
 }

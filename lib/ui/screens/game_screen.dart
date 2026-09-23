@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants.dart';
 import '../../game/game_controller.dart';
 import '../../game/game_state.dart';
+import '../../game/progress_store.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../l10n/locale_controller.dart';
 import '../theme/metro_theme.dart';
@@ -11,11 +12,17 @@ import '../widgets/collision_overlay.dart';
 import '../widgets/language_switcher.dart';
 import '../widgets/metro_grid.dart';
 import '../widgets/pause_overlay.dart';
+import '../widgets/tier_choice_overlay.dart';
 
 class GameScreen extends StatefulWidget {
-  const GameScreen({super.key, required this.localeController});
+  const GameScreen({
+    super.key,
+    required this.localeController,
+    required this.progressStore,
+  });
 
   final LocaleController localeController;
+  final ProgressStore progressStore;
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -32,8 +39,11 @@ class _GameScreenState extends State<GameScreen>
   @override
   void initState() {
     super.initState();
-    _gameState = GameState();
-    _gameController = GameController(_gameState);
+    _gameState = GameState(tier: widget.progressStore.tier);
+    _gameController = GameController(
+      _gameState,
+      progressStore: widget.progressStore,
+    );
     _collisionController = AnimationController(
       vsync: this,
       duration: GameConstants.collisionAnimationDuration,
@@ -116,7 +126,13 @@ class _GameScreenState extends State<GameScreen>
                 ],
               ),
             ),
-            _StationPlaque(label: l10n.stationLabel),
+            AnimatedBuilder(
+              animation: _gameState,
+              builder: (context, _) => _StationPlaque(
+                label: '${l10n.stationLabel} · '
+                    '${_gameState.tier.label(l10n).toUpperCase()}',
+              ),
+            ),
             Expanded(
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
@@ -132,6 +148,18 @@ class _GameScreenState extends State<GameScreen>
                       ),
                     ),
                     CollisionOverlay(kind: _collisionMessage),
+                    Positioned.fill(
+                      child: AnimatedBuilder(
+                        animation: _gameState,
+                        builder: (context, _) => TierChoiceOverlay(
+                          visible:
+                              _gameState.phase == GamePhase.choosingTier,
+                          score: _gameState.score,
+                          tier: _gameState.tier,
+                          onChoose: _gameController.chooseTier,
+                        ),
+                      ),
+                    ),
                     Positioned.fill(
                       child: AnimatedBuilder(
                         animation: _gameState,

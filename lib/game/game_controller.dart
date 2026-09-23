@@ -5,18 +5,20 @@ import 'package:flutter/gestures.dart';
 import '../core/constants.dart';
 import '../core/grid.dart';
 import 'game_state.dart';
+import 'progress_store.dart';
 
 class GameController {
-  GameController(this.gameState);
+  GameController(this.gameState, {this.progressStore});
 
   final GameState gameState;
+  final ProgressStore? progressStore;
   Timer? _ticker;
   Completer<void>? _resumed;
 
   void start() {
     _ticker?.cancel();
     if (gameState.isPaused) return;
-    _ticker = Timer.periodic(GameConstants.tickInterval, (_) {
+    _ticker = Timer.periodic(gameState.tier.tickInterval, (_) {
       gameState.tick();
       if (gameState.phase != GamePhase.playing) {
         _ticker?.cancel();
@@ -26,6 +28,12 @@ class GameController {
 
   void resumeAfterCollision() {
     gameState.reset();
+    start();
+  }
+
+  void chooseTier({required bool advance}) {
+    gameState.chooseTier(advance: advance);
+    if (advance) progressStore?.saveTier(gameState.tier);
     start();
   }
 

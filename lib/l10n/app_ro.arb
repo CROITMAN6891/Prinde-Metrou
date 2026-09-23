@@ -8,5 +8,12 @@
   "languageNameEnglish": "EN",
   "languageNameRomanian": "RO",
   "pausedTitle": "Pauză",
-  "tapToContinue": "Atinge pentru a continua"
+  "tapToContinue": "Atinge pentru a continua",
+  "tierLight": "Ușor",
+  "tierMedium": "Mediu",
+  "tierHard": "Greu",
+  "tierChoiceTitle": "{count} vagoane!",
+  "tierCurrent": "Viteza curentă: {tier}",
+  "tierAdvance": "Continuă la nivelul următor ({tier})",
+  "tierStay": "Încearcă mai departe la acest nivel"
 }

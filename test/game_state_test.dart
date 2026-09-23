@@ -5,6 +5,9 @@ import 'package:prinde_metrou/core/grid.dart';
 import 'package:prinde_metrou/game/collision.dart';
 import 'package:prinde_metrou/game/game_controller.dart';
 import 'package:prinde_metrou/game/game_state.dart';
+import 'package:prinde_metrou/game/progress_store.dart';
+import 'package:prinde_metrou/game/progression.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   group('GameState movement', () {
@@ -146,6 +149,82 @@ void main() {
       expect(released, isTrue);
       expect(state.isPaused, isFalse);
       controller.dispose();
+    });
+  });
+
+  group('Speed tiers', () {
+    /// Puts the score one below [target] and the wagon right in front of
+    /// the head, so the next tick lands exactly on [target].
+    void tickOnto(GameState state, int target) {
+      state.score = target - 1;
+      state.wagon = state.head.moved(state.direction);
+      state.tick();
+    }
+
+    test('reaching 25 stops the game on the tier choice', () {
+      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      tickOnto(state, 24);
+      expect(state.phase, GamePhase.playing);
+
+      tickOnto(state, 25);
+      expect(state.score, 25);
+      expect(state.phase, GamePhase.choosingTier);
+
+      final head = state.head;
+      state.tick();
+      expect(state.head, head, reason: 'train must not move while choosing');
+    });
+
+    test('advancing moves up one tier; staying keeps it', () {
+      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      tickOnto(state, 25);
+      state.chooseTier(advance: false);
+      expect(state.tier, SpeedTier.light);
+      expect(state.phase, GamePhase.playing);
+
+      tickOnto(state, 50);
+      state.chooseTier(advance: true);
+      expect(state.tier, SpeedTier.medium);
+      expect(state.phase, GamePhase.playing);
+    });
+
+    test('no tier choice once at the top tier', () {
+      final state = GameState(
+        gridSize: const GridSize(columns: 5, rows: 5),
+        tier: SpeedTier.hard,
+      );
+      tickOnto(state, 50);
+      expect(state.phase, GamePhase.playing);
+    });
+
+    test('a collision resets the score but keeps the tier', () {
+      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      tickOnto(state, 25);
+      state.chooseTier(advance: true);
+
+      for (var i = 0; i < 10 && state.phase == GamePhase.playing; i++) {
+        state.tick();
+      }
+      expect(state.phase, GamePhase.colliding);
+      state.reset();
+
+      expect(state.score, 0);
+      expect(state.tier, SpeedTier.medium);
+    });
+
+    test('ProgressStore persists the tier reached', () async {
+      SharedPreferences.setMockInitialValues({});
+      final store = await ProgressStore.load();
+      expect(store.tier, SpeedTier.light);
+
+      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      final controller = GameController(state, progressStore: store);
+      tickOnto(state, 25);
+      controller.chooseTier(advance: true);
+      controller.dispose();
+
+      final reloaded = await ProgressStore.load();
+      expect(reloaded.tier, SpeedTier.medium);
     });
   });
 }

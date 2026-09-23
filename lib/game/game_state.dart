@@ -5,11 +5,18 @@ import 'package:flutter/foundation.dart';
 import '../core/constants.dart';
 import '../core/grid.dart';
 import 'collision.dart';
+import 'progression.dart';
 
-enum GamePhase { playing, colliding }
+enum GamePhase {
+  playing,
+  colliding,
+
+  /// Stopped at a milestone, waiting for the player to pick a speed tier.
+  choosingTier,
+}
 
 class GameState extends ChangeNotifier {
-  GameState({GridSize? gridSize})
+  GameState({GridSize? gridSize, this.tier = SpeedTier.light})
       : gridSize = gridSize ?? GameConstants.gridSize {
     _reset();
   }
@@ -21,6 +28,9 @@ class GameState extends ChangeNotifier {
   late Direction direction;
   Direction? _queuedDirection;
   late GridPosition wagon;
+
+  /// Survives [reset]: a collision restarts the score, not the speed.
+  SpeedTier tier;
   int score = 0;
   GamePhase phase = GamePhase.playing;
   CollisionSide? lastCollisionSide;
@@ -62,6 +72,9 @@ class GameState extends ChangeNotifier {
     if (grew) {
       score += 1;
       _spawnWagon();
+      if (isTierMilestone(score) && tier.next != null) {
+        phase = GamePhase.choosingTier;
+      }
     } else {
       segments.removeLast();
     }
@@ -79,6 +92,14 @@ class GameState extends ChangeNotifier {
   void _collide(CollisionSide side) {
     phase = GamePhase.colliding;
     lastCollisionSide = side;
+    notifyListeners();
+  }
+
+  /// Resolves a [GamePhase.choosingTier] stop: moves up a tier or stays.
+  void chooseTier({required bool advance}) {
+    if (phase != GamePhase.choosingTier) return;
+    if (advance) tier = tier.next ?? tier;
+    phase = GamePhase.playing;
     notifyListeners();
   }
 
