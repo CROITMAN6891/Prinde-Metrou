@@ -29,6 +29,10 @@ class GameState extends ChangeNotifier {
   Direction? _queuedDirection;
   late GridPosition wagon;
 
+  /// Set while the train holds for one tick in front of an obstacle, so a
+  /// swipe that lands just too late can still steer it clear.
+  bool _inGraceTick = false;
+
   /// Survives [reset]: a collision restarts the score, not the speed.
   SpeedTier tier;
   int score = 0;
@@ -64,16 +68,21 @@ class GameState extends ChangeNotifier {
     }
 
     final newHead = head.moved(direction);
+    final CollisionSide? hit = !newHead.isInside(gridSize)
+        ? _sideForOutOfBounds(newHead)
+        : segments.contains(newHead)
+        ? CollisionSide.self
+        : null;
 
-    if (!newHead.isInside(gridSize)) {
-      _collide(_sideForOutOfBounds(newHead));
+    if (hit != null) {
+      if (_inGraceTick) {
+        _collide(hit);
+      } else {
+        _inGraceTick = true;
+      }
       return;
     }
-
-    if (segments.contains(newHead)) {
-      _collide(CollisionSide.self);
-      return;
-    }
+    _inGraceTick = false;
 
     final grew = newHead == wagon;
     segments.insert(0, newHead);
@@ -134,6 +143,7 @@ class GameState extends ChangeNotifier {
     segments = [GridPosition(startRow, startCol)];
     direction = Direction.right;
     _queuedDirection = null;
+    _inGraceTick = false;
     score = 0;
     phase = GamePhase.playing;
     lastCollisionSide = null;

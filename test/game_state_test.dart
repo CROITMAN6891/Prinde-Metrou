@@ -110,10 +110,61 @@ void main() {
       state.wagon = const GridPosition(4, 4);
 
       state.queueDirection(Direction.left);
+      state.tick(); // grace tick
       state.tick();
 
       expect(state.phase, GamePhase.colliding);
       expect(state.lastCollisionSide, CollisionSide.self);
+    });
+
+    test('the train holds for one tick in front of a wall before crashing',
+        () {
+      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      state.wagon = const GridPosition(0, 0);
+      state.tick();
+      state.tick(); // head now on the last column
+      final headAtWall = state.head;
+
+      state.tick();
+      expect(state.phase, GamePhase.playing);
+      expect(state.head, headAtWall);
+
+      state.tick();
+      expect(state.phase, GamePhase.colliding);
+      expect(state.lastCollisionSide, CollisionSide.right);
+    });
+
+    test('a turn queued during the grace tick steers clear of the wall', () {
+      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      state.wagon = const GridPosition(0, 0);
+      state.tick();
+      state.tick();
+      state.tick(); // grace tick at the wall
+
+      state.queueDirection(Direction.down);
+      state.tick();
+
+      expect(state.phase, GamePhase.playing);
+      expect(state.direction, Direction.down);
+      expect(state.head, const GridPosition(3, 4));
+    });
+
+    test('grace is granted again after the train moves on', () {
+      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      state.wagon = const GridPosition(0, 0);
+      state.tick();
+      state.tick();
+      state.tick(); // grace used at the right wall
+      state.queueDirection(Direction.down);
+      state.tick(); // (3, 4)
+      state.tick(); // (4, 4), last row
+
+      state.tick();
+      expect(state.phase, GamePhase.playing);
+
+      state.tick();
+      expect(state.phase, GamePhase.colliding);
+      expect(state.lastCollisionSide, CollisionSide.bottom);
     });
   });
 
