@@ -320,6 +320,86 @@ void main() {
       );
     });
 
+    // Paths below are trimmed from swipes logged on a physical phone.
+    test('a swipe whose arc starts back against the heading still turns', () {
+      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      state.direction = Direction.down;
+      state.segments = [state.head, state.head.moved(Direction.up)];
+      final controller = GameController(state);
+
+      drag(controller, const [
+        Offset(-0.4, -7.3),
+        Offset(-1.5, -7.3),
+        Offset(-2.2, -6.9),
+        Offset(-3.6, -6.2),
+        Offset(-4.0, -4.4),
+        Offset(-4.7, -3.6),
+        Offset(-4.7, -2.5),
+        Offset(-4.4, -1.5),
+        Offset(-5.1, -1.8),
+        Offset(-5.4, -1.1),
+        Offset(-5.4, -1.1),
+        Offset(-5.8, -0.7),
+        Offset(-6.2, -0.4),
+        Offset(-5.8, -0.7),
+        Offset(-5.4, 0.0),
+      ]);
+      state.tick();
+
+      expect(state.direction, Direction.left);
+    });
+
+    test(
+      'a swipe that drifts along the heading before bending still turns',
+      () {
+        final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+        state.direction = Direction.right;
+        final controller = GameController(state);
+
+        drag(controller, const [
+          Offset(3.3, -1.8),
+          Offset(3.6, -1.8),
+          Offset(2.9, -1.8),
+          Offset(2.9, -1.8),
+          Offset(2.5, -1.5),
+          Offset(2.9, -1.8),
+          Offset(2.5, -1.5),
+          Offset(2.9, -1.5),
+          Offset(2.9, -1.5),
+          Offset(2.5, -1.5),
+          Offset(2.5, -1.5),
+          Offset(2.9, -1.8),
+          Offset(2.9, -1.8),
+          Offset(2.9, -2.5),
+          Offset(5.4, -5.8),
+          Offset(2.5, -3.6),
+          Offset(2.2, -4.4),
+          Offset(2.2, -4.0),
+          Offset(1.5, -4.7),
+          Offset(1.1, -5.1),
+          Offset(1.1, -7.6),
+          Offset(1.1, -9.0),
+          Offset(1.0, -12.0),
+          Offset(1.0, -14.0),
+          Offset(1.0, -16.0),
+        ]);
+        state.tick();
+
+        expect(state.direction, Direction.up);
+      },
+    );
+
+    test('a swipe straight back against the heading changes nothing', () {
+      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      state.segments = [state.head, state.head.moved(Direction.left)];
+      final controller = GameController(state);
+
+      drag(controller, const [Offset(-15, 1), Offset(-20, 0), Offset(-20, 2)]);
+      state.tick();
+
+      expect(state.direction, Direction.right);
+    });
+
     test('tiny drags below the threshold are ignored', () {
       final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
       final controller = GameController(state);

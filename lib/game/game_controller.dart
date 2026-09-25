@@ -66,15 +66,21 @@ class GameController {
   }
 
   /// Decides the direction from the finger's accumulated travel as soon as
-  /// it passes the threshold, then ignores the rest of the gesture. Using
-  /// travel rather than release velocity matters: the last few ms before
-  /// lift-off often hook back, which flipped swipes to the opposite way.
+  /// it passes the threshold and points somewhere the train can turn, then
+  /// ignores the rest of the gesture. Using travel rather than release
+  /// velocity matters: the last few ms before lift-off often hook back,
+  /// which flipped swipes to the opposite way. Waiting for a real turn
+  /// matters too: thumb swipes arc, so their first pixels often run along
+  /// the current heading (or back against it) before bending the intended
+  /// way, and locking onto those swallowed the swipe.
   void onSwipeUpdate(DragUpdateDetails details) {
     if (_swipeHandled) return;
     _swipeTravel += details.delta;
     if (_swipeTravel.distance < GameConstants.swipeDistanceThreshold) return;
+    final direction = directionForSwipe(_swipeTravel);
+    if (!gameState.canTurn(direction)) return;
     _swipeHandled = true;
-    gameState.queueDirection(directionForSwipe(_swipeTravel));
+    gameState.queueDirection(direction);
   }
 
   @visibleForTesting

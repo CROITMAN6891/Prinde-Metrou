@@ -41,6 +41,14 @@ class GameState extends ChangeNotifier {
 
   GridPosition get head => segments.first;
 
+  /// Whether [newDirection] would change where the train goes next:
+  /// not the way it already heads, and not straight back into itself.
+  bool canTurn(Direction newDirection) =>
+      phase == GamePhase.playing &&
+      !isPaused &&
+      newDirection != direction &&
+      !(newDirection == direction.opposite && segments.length > 1);
+
   void queueDirection(Direction newDirection) {
     if (phase != GamePhase.playing || isPaused) return;
     if (newDirection == direction.opposite && segments.length > 1) return;
