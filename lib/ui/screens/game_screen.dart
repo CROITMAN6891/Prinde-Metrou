@@ -210,23 +210,22 @@ class _GameScreenState extends State<GameScreen>
                     ),
                     CollisionOverlay(kind: _collisionMessage),
                     Positioned.fill(
-                      child: CelebrationOverlay(
-                        celebration: _celebration,
-                        unlockedSkin: _celebrationUnlockedSkin,
-                      ),
-                    ),
-                    Positioned.fill(
                       child: AnimatedBuilder(
                         animation: _gameState,
                         builder: (context, _) => TierChoiceOverlay(
-                          // Let the milestone celebration play out first.
-                          visible:
-                              _gameState.phase == GamePhase.choosingTier &&
-                              _celebration == null,
+                          visible: _gameState.phase == GamePhase.choosingTier,
                           score: _gameState.score,
                           tier: _gameState.tier,
                           onChoose: _gameController.chooseTier,
                         ),
+                      ),
+                    ),
+                    // Above the tier choice, so the milestone banner shows over
+                    // its dimmed backdrop instead of under it.
+                    Positioned.fill(
+                      child: CelebrationOverlay(
+                        celebration: _celebration,
+                        unlockedSkin: _celebrationUnlockedSkin,
                       ),
                     ),
                     Positioned.fill(
