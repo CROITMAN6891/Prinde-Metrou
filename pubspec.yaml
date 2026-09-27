@@ -50,6 +50,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -96,3 +97,16 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# App icons, generated with `dart run flutter_launcher_icons`.
+flutter_launcher_icons:
+  android: true
+  ios: true
+  # Pre-Android-8 launchers use this flat icon as is.
+  image_path: "assets/icon/legacy-launcher-icon-192x192.png"
+  # The adaptive layers flattened, at full size: iOS rejects transparency
+  # and would upscale the 192px legacy icon.
+  image_path_ios: "assets/icon/ios-icon-512x512.png"
+  remove_alpha_ios: true
+  adaptive_icon_background: "assets/icon/adaptive-background-512x512.png"
+  adaptive_icon_foreground: "assets/icon/adaptive-foreground-512x512.png"
