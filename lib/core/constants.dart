@@ -5,8 +5,13 @@ class GameConstants {
 
   static const GridSize gridSize = GridSize(columns: 9, rows: 14);
 
-  /// Pass-through stations placed on the grid each round.
-  static const int stationCount = 2;
+  /// Stations placed on the grid each round, the first two of which are a
+  /// portal pair.
+  static const int stationCount = 3;
+
+  /// Portals keep at least this far apart (in steps), so going through one
+  /// is a real jump across the grid.
+  static const int minPortalDistance = 4;
   static const Duration collisionAnimationDuration =
       Duration(milliseconds: 550);
   static const Duration ouchMessageDuration = Duration(milliseconds: 700);

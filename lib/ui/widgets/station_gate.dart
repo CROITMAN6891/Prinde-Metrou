@@ -13,11 +13,16 @@ class StationGate extends StatelessWidget {
     super.key,
     required this.cellSize,
     required this.label,
+    this.portal = false,
     this.claimed = false,
   });
 
   final double cellSize;
   final String label;
+
+  /// One of the linked pair that teleports the train: a violet arch, so
+  /// the two ends read as a pair apart from the plain station.
+  final bool portal;
 
   /// Its bonus is already taken this round: the board goes grey and blank,
   /// so the player can tell at a glance which station still pays out.
@@ -27,7 +32,11 @@ class StationGate extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Positioned.fill(child: CustomPaint(painter: _ArchPainter())),
+        Positioned.fill(
+          child: CustomPaint(
+            painter: _ArchPainter(portal ? _portalColor : _stationColor),
+          ),
+        ),
         // The name board hangs from the top of the arch, between the
         // pillars.
         Positioned(
@@ -64,13 +73,18 @@ class StationGate extends StatelessWidget {
   }
 }
 
+const _stationColor = Color(0xFFB8C1CC);
+const _portalColor = Color(0xFFA78BFA);
+
 class _ArchPainter extends CustomPainter {
-  static const _stone = Color(0xFFB8C1CC);
+  _ArchPainter(this.stone);
+
+  final Color stone;
 
   @override
   void paint(Canvas canvas, Size size) {
     final s = size.shortestSide;
-    final fill = Paint()..color = _stone;
+    final fill = Paint()..color = stone;
     final edge = Paint()
       ..color = MetroTheme.background
       ..style = PaintingStyle.stroke
@@ -93,7 +107,7 @@ class _ArchPainter extends CustomPainter {
 
     // A darker foot at the bottom of each pillar, so they read as
     // standing structures rather than stripes.
-    final foot = Paint()..color = Color.lerp(_stone, Colors.black, 0.35)!;
+    final foot = Paint()..color = Color.lerp(stone, Colors.black, 0.35)!;
     for (final x in [s * 0.0, s * 0.82]) {
       canvas.drawRRect(
         RRect.fromLTRBR(
@@ -109,5 +123,5 @@ class _ArchPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_ArchPainter old) => false;
+  bool shouldRepaint(_ArchPainter old) => old.stone != stone;
 }

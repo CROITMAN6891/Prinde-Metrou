@@ -16,6 +16,7 @@ class MetroGrid extends StatelessWidget {
     required this.collisionAnimation,
     required this.skin,
     required this.stationLabel,
+    required this.portalLabel,
   });
 
   final GameState gameState;
@@ -24,6 +25,9 @@ class MetroGrid extends StatelessWidget {
 
   /// Name shown on each station's sign ("STAȚIE" / "STATION").
   final String stationLabel;
+
+  /// Name shown on each portal's sign.
+  final String portalLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +43,11 @@ class MetroGrid extends StatelessWidget {
             final gridHeight = cellSize * gameState.gridSize.rows;
             final colliding = gameState.phase == GamePhase.colliding;
             final segments = gameState.segments;
-            final headings = segmentHeadings(segments, gameState.direction);
+            final headings = segmentHeadings(
+              segments,
+              gameState.direction,
+              portals: gameState.portals,
+            );
 
             return Center(
               child: SizedBox(
@@ -86,6 +94,9 @@ class MetroGrid extends StatelessWidget {
                           // Recomputed every frame from the list, so the
                           // position lights follow whichever piece is last.
                           isTail: i == segments.length - 1,
+                          coupled:
+                              i < segments.length - 1 &&
+                              areLinked(segments[i], segments[i + 1]),
                           heading: headings[i],
                           segmentIndex: i,
                           cellSize: cellSize,
@@ -107,7 +118,10 @@ class MetroGrid extends StatelessWidget {
                         height: cellSize,
                         child: StationGate(
                           cellSize: cellSize,
-                          label: stationLabel,
+                          label: gameState.portals.contains(station)
+                              ? portalLabel
+                              : stationLabel,
+                          portal: gameState.portals.contains(station),
                           claimed: gameState.claimedStations.contains(station),
                         ),
                       ),

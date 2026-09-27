@@ -239,6 +239,7 @@ class _GameScreenState extends State<GameScreen>
                         collisionAnimation: _collisionController,
                         skin: _skin,
                         stationLabel: l10n.stationLabel,
+                        portalLabel: l10n.portalLabel,
                       ),
                     ),
                     CollisionOverlay(kind: _collisionMessage),

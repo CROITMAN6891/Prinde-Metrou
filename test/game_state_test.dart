@@ -12,10 +12,19 @@ import 'package:prinde_metrou/game/progression.dart';
 import 'package:prinde_metrou/game/train_skin.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// A game with no stations or portals, so a test's train is never
+/// diverted or paid a bonus by wherever they happened to land.
+GameState plainGame(GridSize gridSize, {SpeedTier tier = SpeedTier.veryEasy}) {
+  final state = GameState(gridSize: gridSize, tier: tier);
+  state.stations.clear();
+  state.portals = [];
+  return state;
+}
+
 void main() {
   group('GameState movement', () {
     test('train moves one cell per tick in the current direction', () {
-      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      final state = plainGame(const GridSize(columns: 5, rows: 5));
       final head = state.head;
       state.tick();
       expect(state.head, GridPosition(head.row, head.col + 1));
@@ -24,7 +33,7 @@ void main() {
 
     test('queued direction is applied on the next tick, ignoring reversal '
         'once the train has grown', () {
-      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      final state = plainGame(const GridSize(columns: 5, rows: 5));
       final head = state.head;
       state.wagon = GridPosition(head.row, head.col + 1);
       state.tick(); // grows to 2 segments, still moving right
@@ -39,7 +48,7 @@ void main() {
     });
 
     test('collecting the wagon grows the train and increments score', () {
-      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      final state = plainGame(const GridSize(columns: 5, rows: 5));
       final head = state.head;
       state.wagon = GridPosition(head.row, head.col + 1);
       final lengthBefore = state.segments.length;
@@ -54,7 +63,7 @@ void main() {
 
   group('GameState collisions', () {
     test('hitting the right wall sets phase=colliding with side=right', () {
-      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      final state = plainGame(const GridSize(columns: 5, rows: 5));
       for (var i = 0; i < 10 && state.phase == GamePhase.playing; i++) {
         state.tick();
       }
@@ -63,7 +72,7 @@ void main() {
     });
 
     test('hitting the top wall sets side=top', () {
-      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      final state = plainGame(const GridSize(columns: 5, rows: 5));
       state.queueDirection(Direction.up);
       for (var i = 0; i < 10 && state.phase == GamePhase.playing; i++) {
         state.tick();
@@ -73,7 +82,7 @@ void main() {
     });
 
     test('ticking while colliding does not move the train further', () {
-      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      final state = plainGame(const GridSize(columns: 5, rows: 5));
       for (var i = 0; i < 10 && state.phase == GamePhase.playing; i++) {
         state.tick();
       }
@@ -83,7 +92,7 @@ void main() {
     });
 
     test('reset() restores score to zero and phase to playing', () {
-      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      final state = plainGame(const GridSize(columns: 5, rows: 5));
       for (var i = 0; i < 10 && state.phase == GamePhase.playing; i++) {
         state.tick();
       }
@@ -97,7 +106,7 @@ void main() {
     });
 
     test('running into own tail sets side=self', () {
-      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      final state = plainGame(const GridSize(columns: 5, rows: 5));
       final head = state.head;
       // Build a 3-segment train that can turn back into itself.
       state.segments
@@ -120,7 +129,7 @@ void main() {
 
     test('the train holds for one tick in front of a wall before crashing',
         () {
-      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      final state = plainGame(const GridSize(columns: 5, rows: 5));
       state.wagon = const GridPosition(0, 0);
       state.tick();
       state.tick(); // head now on the last column
@@ -136,7 +145,7 @@ void main() {
     });
 
     test('a turn queued during the grace tick steers clear of the wall', () {
-      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      final state = plainGame(const GridSize(columns: 5, rows: 5));
       state.wagon = const GridPosition(0, 0);
       state.tick();
       state.tick();
@@ -151,7 +160,7 @@ void main() {
     });
 
     test('grace is granted again after the train moves on', () {
-      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      final state = plainGame(const GridSize(columns: 5, rows: 5));
       state.wagon = const GridPosition(0, 0);
       state.tick();
       state.tick();
@@ -171,7 +180,7 @@ void main() {
 
   group('Pause', () {
     test('paused state ignores ticks and direction changes', () {
-      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      final state = plainGame(const GridSize(columns: 5, rows: 5));
       final head = state.head;
       state.pause();
 
@@ -186,7 +195,7 @@ void main() {
     });
 
     test('controller holds waitUntilResumed until resume()', () async {
-      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      final state = plainGame(const GridSize(columns: 5, rows: 5));
       final controller = GameController(state);
       var released = false;
 
@@ -215,7 +224,7 @@ void main() {
     }
 
     test('reaching 25 stops the game on the tier choice', () {
-      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      final state = plainGame(const GridSize(columns: 5, rows: 5));
       tickOnto(state, 24);
       expect(state.phase, GamePhase.playing);
 
@@ -229,7 +238,7 @@ void main() {
     });
 
     test('advancing moves up one tier; staying keeps it', () {
-      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      final state = plainGame(const GridSize(columns: 5, rows: 5));
       tickOnto(state, 25);
       state.chooseTier(advance: false);
       expect(state.tier, SpeedTier.veryEasy);
@@ -242,8 +251,8 @@ void main() {
     });
 
     test('no tier choice once at the top tier', () {
-      final state = GameState(
-        gridSize: const GridSize(columns: 5, rows: 5),
+      final state = plainGame(
+        const GridSize(columns: 5, rows: 5),
         tier: SpeedTier.hard,
       );
       tickOnto(state, 50);
@@ -251,7 +260,7 @@ void main() {
     });
 
     test('a collision resets the score but keeps the tier', () {
-      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      final state = plainGame(const GridSize(columns: 5, rows: 5));
       tickOnto(state, 25);
       state.chooseTier(advance: true);
 
@@ -270,7 +279,7 @@ void main() {
       final store = await ProgressStore.load();
       expect(store.tier, SpeedTier.veryEasy);
 
-      final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
+      final state = plainGame(const GridSize(columns: 5, rows: 5));
       final controller = GameController(state, progressStore: store);
       tickOnto(state, 25);
       controller.chooseTier(advance: true);
@@ -319,8 +328,8 @@ void main() {
         () async {
       SharedPreferences.setMockInitialValues({'speedTier': 'medium'});
       final store = await ProgressStore.load();
-      final state = GameState(
-        gridSize: const GridSize(columns: 5, rows: 5),
+      final state = plainGame(
+        const GridSize(columns: 5, rows: 5),
         tier: SpeedTier.medium,
       );
       final controller = GameController(state, progressStore: store);
@@ -392,22 +401,40 @@ void main() {
   });
 
   group('Stations', () {
-    test('two stations sit on cells free of the train, wagon and each other',
-        () {
+    test('three stations sit on cells free of the train, wagon and each '
+        'other; two of them are far-apart inner portals', () {
       for (var run = 0; run < 50; run++) {
         final state = GameState();
-        expect(state.stations, hasLength(2));
-        expect(state.stations.toSet(), hasLength(2));
+        expect(state.stations, hasLength(3));
+        expect(state.stations.toSet(), hasLength(3));
         for (final station in state.stations) {
           expect(station.isInside(state.gridSize), isTrue);
           expect(state.segments, isNot(contains(station)));
           expect(station, isNot(state.wagon));
         }
+
+        expect(state.portals, hasLength(2));
+        expect(state.stations, containsAll(state.portals));
+        for (final portal in state.portals) {
+          expect(portal.row, inInclusiveRange(1, state.gridSize.rows - 2));
+          expect(portal.col, inInclusiveRange(1, state.gridSize.columns - 2));
+        }
+        final [a, b] = state.portals;
+        expect(
+          (a.row - b.row).abs() + (a.col - b.col).abs(),
+          greaterThanOrEqualTo(4),
+        );
       }
     });
 
+    test('a grid too small for a far-apart pair plays without portals', () {
+      final state = GameState(gridSize: const GridSize(columns: 3, rows: 3));
+      expect(state.portals, isEmpty);
+      expect(state.stations, hasLength(3));
+    });
+
     test('stations stay put while wagons are collected', () {
-      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      final state = plainGame(const GridSize(columns: 9, rows: 9));
       final stations = List.of(state.stations);
       state.stations
         ..clear()
@@ -432,7 +459,7 @@ void main() {
     });
 
     test('the train runs through a station like any free cell', () {
-      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      final state = plainGame(const GridSize(columns: 9, rows: 9));
       final ahead = state.head.moved(Direction.right);
       state.stations
         ..clear()
@@ -446,7 +473,7 @@ void main() {
     });
 
     test('the first pass through a station is worth a wagon', () {
-      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      final state = plainGame(const GridSize(columns: 9, rows: 9));
       final ahead = state.head.moved(Direction.right);
       state.stations
         ..clear()
@@ -463,7 +490,7 @@ void main() {
     });
 
     test('passing through the same station again pays nothing', () {
-      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      final state = plainGame(const GridSize(columns: 9, rows: 9));
       final station = state.head.moved(Direction.right);
       state.stations
         ..clear()
@@ -488,7 +515,7 @@ void main() {
     });
 
     test('each station pays out once per round, then again next round', () {
-      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      final state = plainGame(const GridSize(columns: 9, rows: 9));
       state.stations
         ..clear()
         ..add(state.head.moved(Direction.right));
@@ -503,7 +530,7 @@ void main() {
     });
 
     test('a bonus that reaches a milestone opens the tier choice', () {
-      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      final state = plainGame(const GridSize(columns: 9, rows: 9));
       state.score = 24;
       state.stations
         ..clear()
@@ -516,8 +543,174 @@ void main() {
       expect(state.phase, GamePhase.choosingTier);
     });
 
+    test('entering a portal puts the head on the other, same heading', () {
+      final state = plainGame(const GridSize(columns: 9, rows: 9));
+      final entry = state.head.moved(Direction.right);
+      const exit = GridPosition(1, 1);
+      state.portals = [entry, exit];
+      state.stations.addAll(state.portals);
+      state.wagon = const GridPosition(8, 8);
+
+      state.tick();
+
+      expect(state.head, exit);
+      expect(state.direction, Direction.right);
+      expect(state.segments, isNot(contains(entry)));
+
+      state.tick();
+      expect(state.head, const GridPosition(1, 2));
+    });
+
+    test('a portal pays the bonus for the end stepped into', () {
+      final state = plainGame(const GridSize(columns: 9, rows: 9));
+      final entry = state.head.moved(Direction.right);
+      const exit = GridPosition(1, 1);
+      state.portals = [entry, exit];
+      state.stations.addAll(state.portals);
+      state.wagon = const GridPosition(8, 8);
+
+      state.tick();
+
+      expect(state.score, 1);
+      expect(state.segments, hasLength(2));
+      expect(state.lastGainWasBonus, isTrue);
+      expect(state.claimedStations, {entry});
+    });
+
+    test('a claimed portal still teleports, but pays nothing more', () {
+      final state = plainGame(const GridSize(columns: 9, rows: 9));
+      final entry = state.head.moved(Direction.right);
+      const exit = GridPosition(1, 1);
+      state.portals = [entry, exit];
+      state.stations.addAll(state.portals);
+      state.claimedStations.add(entry);
+      state.wagon = const GridPosition(8, 8);
+
+      state.tick();
+
+      expect(state.head, exit);
+      expect(state.score, 0);
+      expect(state.segments, hasLength(1));
+    });
+
+    test('wagons follow the head through the portal', () {
+      final state = plainGame(const GridSize(columns: 9, rows: 9));
+      final start = state.head;
+      final entry = start.moved(Direction.right);
+      const exit = GridPosition(1, 1);
+      state.segments = [start, start.moved(Direction.left)];
+      state.portals = [entry, exit];
+      state.stations.addAll(state.portals);
+      state.claimedStations.addAll(state.portals);
+      state.wagon = const GridPosition(8, 8);
+
+      state.tick(); // head jumps to the exit
+      state.tick(); // the first wagon comes out behind it
+
+      expect(state.segments, [const GridPosition(1, 2), exit]);
+    });
+
+    test('an exit blocked by the train is a collision, after the grace '
+        'tick', () {
+      final state = plainGame(const GridSize(columns: 9, rows: 9));
+      final entry = state.head.moved(Direction.right);
+      final exit = state.head.moved(Direction.left);
+      state.segments = [state.head, exit, exit.moved(Direction.left)];
+      state.portals = [entry, exit];
+      state.stations.addAll(state.portals);
+      state.wagon = const GridPosition(8, 8);
+
+      state.tick();
+      expect(state.phase, GamePhase.playing);
+      state.tick();
+
+      expect(state.phase, GamePhase.colliding);
+      expect(state.lastCollisionSide, CollisionSide.self);
+    });
+
+    test('the head may take the cell the tail is leaving', () {
+      final state = plainGame(const GridSize(columns: 9, rows: 9));
+      // A 2x2 loop: the head at (4, 4) turns up into (3, 4), where the
+      // tail sits and is about to move on.
+      state.segments = [
+        const GridPosition(4, 4),
+        const GridPosition(4, 3),
+        const GridPosition(3, 3),
+        const GridPosition(3, 4),
+      ];
+      state.direction = Direction.right;
+      state.wagon = const GridPosition(8, 8);
+
+      state.queueDirection(Direction.up);
+      state.tick();
+
+      expect(state.phase, GamePhase.playing);
+      expect(state.head, const GridPosition(3, 4));
+      expect(state.segments, hasLength(4));
+    });
+
+    test('the tail stays in the way when that step grows the train', () {
+      final state = plainGame(const GridSize(columns: 9, rows: 9));
+      const tail = GridPosition(3, 4);
+      state.segments = [
+        const GridPosition(4, 4),
+        const GridPosition(4, 3),
+        const GridPosition(3, 3),
+        tail,
+      ];
+      state.direction = Direction.right;
+      // Stepping onto the tail cell would also claim a station's bonus.
+      state.stations.add(tail);
+      state.wagon = const GridPosition(8, 8);
+
+      state.queueDirection(Direction.up);
+      state.tick(); // grace
+      state.tick();
+
+      expect(state.phase, GamePhase.colliding);
+      expect(state.lastCollisionSide, CollisionSide.self);
+      expect(state.score, 0);
+    });
+
+    test('a split train collides with wagons still short of the portal', () {
+      final state = plainGame(const GridSize(columns: 9, rows: 14));
+      // Entry at (5, 5) approached from the left; exit at (6, 2), right
+      // under the lane the rear of the train is still on.
+      state.portals = [const GridPosition(5, 5), const GridPosition(6, 2)];
+      state.stations.addAll(state.portals);
+      state.claimedStations.addAll(state.portals);
+      state.segments = [for (var c = 4; c >= 0; c--) GridPosition(5, c)];
+      state.wagon = const GridPosition(13, 8);
+
+      state.tick(); // out at (6, 2)
+      state.tick(); // (6, 3)
+      state.queueDirection(Direction.up); // (5, 3): a wagon, not the tail
+      state.tick();
+      state.tick();
+
+      expect(state.phase, GamePhase.colliding);
+      expect(state.lastCollisionSide, CollisionSide.self);
+    });
+
+    test('a split train may take the tail cell across the portal', () {
+      final state = plainGame(const GridSize(columns: 9, rows: 14));
+      state.portals = [const GridPosition(5, 5), const GridPosition(6, 2)];
+      state.stations.addAll(state.portals);
+      state.claimedStations.addAll(state.portals);
+      state.segments = [for (var c = 4; c >= 1; c--) GridPosition(5, c)];
+      state.wagon = const GridPosition(13, 8);
+
+      state.tick(); // out at (6, 2)
+      state.tick(); // (6, 3)
+      state.queueDirection(Direction.up); // (5, 3): now the tail
+      state.tick();
+
+      expect(state.phase, GamePhase.playing);
+      expect(state.head, const GridPosition(5, 3));
+    });
+
     test('collecting a wagon is not flagged as a bonus', () {
-      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      final state = plainGame(const GridSize(columns: 9, rows: 9));
       state.stations.clear();
       state.wagon = state.head.moved(Direction.right);
 
@@ -528,7 +721,7 @@ void main() {
     });
 
     test('a new wagon never lands on a station', () {
-      final state = GameState(gridSize: const GridSize(columns: 3, rows: 3));
+      final state = plainGame(const GridSize(columns: 3, rows: 3));
       // Once the train grows onto (1, 2), only (0, 2) is neither train
       // nor station.
       state.segments = [const GridPosition(1, 1)];
@@ -556,7 +749,7 @@ void main() {
     }
 
     test('a rightward swipe that hooks back at lift-off stays right', () {
-      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      final state = plainGame(const GridSize(columns: 9, rows: 9));
       state.direction = Direction.up;
       final controller = GameController(state);
 
@@ -589,7 +782,7 @@ void main() {
 
     // Paths below are trimmed from swipes logged on a physical phone.
     test('a swipe whose arc starts back against the heading still turns', () {
-      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      final state = plainGame(const GridSize(columns: 9, rows: 9));
       state.direction = Direction.down;
       state.segments = [state.head, state.head.moved(Direction.up)];
       final controller = GameController(state);
@@ -619,7 +812,7 @@ void main() {
     test(
       'a swipe that drifts along the heading before bending still turns',
       () {
-        final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+        final state = plainGame(const GridSize(columns: 9, rows: 9));
         state.direction = Direction.right;
         final controller = GameController(state);
 
@@ -657,7 +850,7 @@ void main() {
     );
 
     test('a swipe straight back against the heading changes nothing', () {
-      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      final state = plainGame(const GridSize(columns: 9, rows: 9));
       state.segments = [state.head, state.head.moved(Direction.left)];
       final controller = GameController(state);
 
@@ -668,7 +861,7 @@ void main() {
     });
 
     test('tiny drags below the threshold are ignored', () {
-      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      final state = plainGame(const GridSize(columns: 9, rows: 9));
       final controller = GameController(state);
 
       drag(controller, const [Offset(0, 5), Offset(0, 6)]);

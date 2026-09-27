@@ -33,6 +33,11 @@ class GameState extends ChangeNotifier {
   /// round, so they stay put while wagons are collected.
   late List<GridPosition> stations;
 
+  /// Two of the [stations]: entering either one puts the head on the other,
+  /// still heading the same way. Kept off the border, so the train never
+  /// comes out facing straight into a wall.
+  late List<GridPosition> portals;
+
   /// Stations whose bonus the head has already taken this round; each
   /// pays out once, so a station can't be farmed by looping through it.
   final Set<GridPosition> claimedStations = {};
@@ -78,10 +83,24 @@ class GameState extends ChangeNotifier {
       _queuedDirection = null;
     }
 
-    final newHead = head.moved(direction);
+    final entered = head.moved(direction);
+    final newHead = portals.contains(entered)
+        ? portals.firstWhere((p) => p != entered)
+        : entered;
+    final collected = newHead == wagon;
+    // Worth a wagon, attached like one, so the count still matches the
+    // wagons behind the head. A portal pays for the one stepped into, not
+    // the one the train comes out of.
+    final bonus =
+        stations.contains(entered) && !claimedStations.contains(entered);
+    final grows = collected || bonus;
+
+    // Unless the train grows on this step, the tail moves off its cell as
+    // the head moves on, so the head may take that cell.
+    final body = grows ? segments : segments.sublist(0, segments.length - 1);
     final CollisionSide? hit = !newHead.isInside(gridSize)
         ? _sideForOutOfBounds(newHead)
-        : segments.contains(newHead)
+        : body.contains(newHead)
         ? CollisionSide.self
         : null;
 
@@ -95,15 +114,11 @@ class GameState extends ChangeNotifier {
     }
     _inGraceTick = false;
 
-    final collected = newHead == wagon;
-    // Worth a wagon, attached like one, so the count still matches the
-    // wagons behind the head.
-    final bonus =
-        stations.contains(newHead) && claimedStations.add(newHead);
     segments.insert(0, newHead);
-    if (collected || bonus) {
+    if (grows) {
       score += 1;
       lastGainWasBonus = bonus;
+      if (bonus) claimedStations.add(entered);
       if (collected) _spawnWagon();
       if (isTierMilestone(score) && tier.next != null) {
         phase = GamePhase.choosingTier;
@@ -169,6 +184,7 @@ class GameState extends ChangeNotifier {
     phase = GamePhase.playing;
     lastCollisionSide = null;
     stations = [];
+    portals = [];
     claimedStations.clear();
     lastGainWasBonus = false;
     _spawnWagon();
@@ -182,7 +198,29 @@ class GameState extends ChangeNotifier {
   }
 
   void _placeStations() {
-    for (var i = 0; i < GameConstants.stationCount; i++) {
+    final inner = [
+      for (final cell in _freeCells()..remove(wagon))
+        if (cell.row > 0 &&
+            cell.row < gridSize.rows - 1 &&
+            cell.col > 0 &&
+            cell.col < gridSize.columns - 1)
+          cell,
+    ];
+    final pairs = [
+      for (var i = 0; i < inner.length; i++)
+        for (var j = i + 1; j < inner.length; j++)
+          if ((inner[i].row - inner[j].row).abs() +
+                  (inner[i].col - inner[j].col).abs() >=
+              GameConstants.minPortalDistance)
+            [inner[i], inner[j]],
+    ];
+    // A grid too small for a far-apart pair just plays without portals.
+    if (pairs.isNotEmpty) {
+      portals = pairs[_random.nextInt(pairs.length)];
+      stations.addAll(portals);
+    }
+
+    while (stations.length < GameConstants.stationCount) {
       final freeCells = _freeCells()..remove(wagon);
       stations.add(freeCells[_random.nextInt(freeCells.length)]);
     }

@@ -8,6 +8,10 @@
   "@stationLabel": {
     "description": "Short plaque-style label shown above the play grid, styled like a metro station sign."
   },
+  "portalLabel": "PORTAL",
+  "@portalLabel": {
+    "description": "Sign on each of the two linked gates that teleport the train from one to the other."
+  },
   "scoreLabel": "Wagons: {count}",
   "@scoreLabel": {
     "description": "Score counter shown above the grid.",

@@ -15,6 +15,7 @@ class TrainSegment extends StatelessWidget {
     super.key,
     required this.isHead,
     required this.isTail,
+    required this.coupled,
     required this.heading,
     required this.segmentIndex,
     required this.cellSize,
@@ -25,6 +26,10 @@ class TrainSegment extends StatelessWidget {
 
   final bool isHead;
   final bool isTail;
+
+  /// Whether the next piece sits right behind this one; not the case for
+  /// the tail, nor across a portal jump.
+  final bool coupled;
   final Direction heading;
   final int segmentIndex;
   final double cellSize;
@@ -42,9 +47,7 @@ class TrainSegment extends StatelessWidget {
         painter: TrainPiecePainter(
           isHead: isHead,
           heading: heading,
-          // Only the last piece: it has nothing behind to couple to, and it
-          // carries the position lights.
-          coupler: !isTail,
+          coupler: coupled,
           tailLights: isTail,
           color: isHead ? skin.head : skin.body,
         ),

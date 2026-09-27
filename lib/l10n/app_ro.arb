@@ -2,6 +2,7 @@
   "@@locale": "ro",
   "appTitle": "Prinde Metrou",
   "stationLabel": "STAȚIE",
+  "portalLabel": "PORTAL",
   "scoreLabel": "Vagoane: {count}",
   "collisionOuch": "Au!",
   "collisionNewChance": "Șansă nouă",

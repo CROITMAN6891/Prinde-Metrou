@@ -52,6 +52,30 @@ void main() {
       );
     });
 
+    test('across a portal jump each side faces its own linked piece', () {
+      // Heading right: (4, 2) is about to enter the portal at (4, 3); the
+      // head and one wagon have already come out of the portal at (1, 1).
+      expect(
+        segmentHeadings(
+          const [GridPosition(1, 2), GridPosition(1, 1), GridPosition(4, 2)],
+          Direction.right,
+          portals: const [GridPosition(4, 3), GridPosition(1, 1)],
+        ),
+        [Direction.right, Direction.right, Direction.right],
+      );
+    });
+
+    test('a head fresh out of a portal keeps the direction of travel', () {
+      expect(
+        segmentHeadings(
+          const [GridPosition(1, 1), GridPosition(4, 2), GridPosition(4, 1)],
+          Direction.right,
+          portals: const [GridPosition(4, 3), GridPosition(1, 1)],
+        ),
+        [Direction.right, Direction.right, Direction.right],
+      );
+    });
+
     test('the head only turns once it has actually moved', () {
       // A turn up has been queued, but the head is still where the
       // rightward move left it.
@@ -69,6 +93,8 @@ void main() {
     tester,
   ) async {
     final state = GameState(gridSize: const GridSize(columns: 9, rows: 14));
+    state.stations.clear();
+    state.portals = [];
     state.wagon = state.head.moved(Direction.right);
     state.tick(); // grows onto the wagon
 
@@ -82,6 +108,7 @@ void main() {
             collisionAnimation: const AlwaysStoppedAnimation(0),
             skin: TrainSkin.classic,
             stationLabel: 'STATION',
+            portalLabel: 'PORTAL',
           ),
         ),
       ),
