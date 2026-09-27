@@ -31,11 +31,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <!-- AdMob test App ID (https://developers.google.com/admob/android/test-ads).
-             Replace with the real App ID before release. -->
+        <!-- AdMob App ID of the Android app. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="ca-app-pub-5775369355948596~6925623073" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
