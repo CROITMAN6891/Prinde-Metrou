@@ -231,12 +231,12 @@ void main() {
       final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
       tickOnto(state, 25);
       state.chooseTier(advance: false);
-      expect(state.tier, SpeedTier.light);
+      expect(state.tier, SpeedTier.veryEasy);
       expect(state.phase, GamePhase.playing);
 
       tickOnto(state, 50);
       state.chooseTier(advance: true);
-      expect(state.tier, SpeedTier.medium);
+      expect(state.tier, SpeedTier.light);
       expect(state.phase, GamePhase.playing);
     });
 
@@ -261,13 +261,13 @@ void main() {
       state.reset();
 
       expect(state.score, 0);
-      expect(state.tier, SpeedTier.medium);
+      expect(state.tier, SpeedTier.light);
     });
 
     test('ProgressStore persists the tier reached', () async {
       SharedPreferences.setMockInitialValues({});
       final store = await ProgressStore.load();
-      expect(store.tier, SpeedTier.light);
+      expect(store.tier, SpeedTier.veryEasy);
 
       final state = GameState(gridSize: const GridSize(columns: 5, rows: 5));
       final controller = GameController(state, progressStore: store);
@@ -276,7 +276,68 @@ void main() {
       controller.dispose();
 
       final reloaded = await ProgressStore.load();
-      expect(reloaded.tier, SpeedTier.medium);
+      expect(reloaded.tier, SpeedTier.light);
+    });
+
+    test('new players start on Very Easy, the slowest tier, below Light', () {
+      final state = GameState();
+      expect(state.tier, SpeedTier.veryEasy);
+      expect(
+        SpeedTier.veryEasy.tickInterval,
+        greaterThan(SpeedTier.light.tickInterval),
+      );
+      expect(SpeedTier.veryEasy.next, SpeedTier.light);
+    });
+
+    test('choosing a slower tier keeps the faster ones unlocked', () async {
+      SharedPreferences.setMockInitialValues({});
+      final store = await ProgressStore.load();
+      await store.saveTier(SpeedTier.medium);
+
+      await store.saveTier(SpeedTier.veryEasy);
+
+      final reloaded = await ProgressStore.load();
+      expect(reloaded.tier, SpeedTier.veryEasy);
+      expect(reloaded.unlockedTier, SpeedTier.medium);
+    });
+
+    test('a tier played before unlocks were stored counts as unlocked',
+        () async {
+      SharedPreferences.setMockInitialValues({'speedTier': 'medium'});
+      final store = await ProgressStore.load();
+      expect(store.unlockedTier, SpeedTier.medium);
+      expect(store.tier, SpeedTier.medium);
+    });
+
+    test('a fresh store has only Very Easy unlocked', () async {
+      SharedPreferences.setMockInitialValues({});
+      expect((await ProgressStore.load()).unlockedTier, SpeedTier.veryEasy);
+    });
+
+    test('selecting a tier mid-run keeps the score and saves the choice',
+        () async {
+      SharedPreferences.setMockInitialValues({'speedTier': 'medium'});
+      final store = await ProgressStore.load();
+      final state = GameState(
+        gridSize: const GridSize(columns: 5, rows: 5),
+        tier: SpeedTier.medium,
+      );
+      final controller = GameController(state, progressStore: store);
+      tickOnto(state, 3);
+
+      controller.selectTier(SpeedTier.veryEasy);
+      controller.dispose();
+
+      expect(state.tier, SpeedTier.veryEasy);
+      expect(state.score, 3);
+      final reloaded = await ProgressStore.load();
+      expect(reloaded.tier, SpeedTier.veryEasy);
+      expect(reloaded.unlockedTier, SpeedTier.medium);
+    });
+
+    test('a tier saved before Very Easy existed still loads', () async {
+      SharedPreferences.setMockInitialValues({'speedTier': 'light'});
+      expect((await ProgressStore.load()).tier, SpeedTier.light);
     });
   });
 

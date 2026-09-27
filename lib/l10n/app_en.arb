@@ -41,9 +41,13 @@
   "@tapToContinue": {
     "description": "Hint under the pause title; tapping the grid resumes the game."
   },
+  "tierVeryEasy": "Very Easy",
+  "@tierVeryEasy": {
+    "description": "Name of the slowest speed tier, the one every new player starts on."
+  },
   "tierLight": "Light",
   "@tierLight": {
-    "description": "Name of the slowest speed tier."
+    "description": "Name of the second-slowest speed tier."
   },
   "tierMedium": "Medium",
   "@tierMedium": {
@@ -110,6 +114,22 @@
     "placeholders": {
       "count": {
         "type": "int"
+      }
+    }
+  },
+  "tierPickerTitle": "Train speed",
+  "@tierPickerTitle": {
+    "description": "Title of the speed picker sheet, and tooltip of the button that opens it."
+  },
+  "tierLocked": "Unlocks at {count} wagons on {tier}",
+  "@tierLocked": {
+    "description": "Shown under a locked speed tier: reach this many wagons on the named slower tier and continue to unlock it.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "tier": {
+        "type": "String"
       }
     }
   },

@@ -7,6 +7,7 @@ import 'package:prinde_metrou/ui/widgets/celebration_overlay.dart';
 import 'package:prinde_metrou/ui/widgets/pause_overlay.dart';
 import 'package:prinde_metrou/ui/widgets/skin_picker.dart';
 import 'package:prinde_metrou/ui/widgets/tier_choice_overlay.dart';
+import 'package:prinde_metrou/ui/widgets/tier_picker.dart';
 
 Widget _host(Widget child, {Locale locale = const Locale('ro')}) => MaterialApp(
   locale: locale,
@@ -90,5 +91,40 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('skin-ocean')));
     await tester.pumpAndSettle();
     expect(picked?.id, 'ocean');
+  });
+
+  testWidgets('tier picker only lets unlocked tiers be picked', (
+    tester,
+  ) async {
+    SpeedTier? picked;
+    await tester.pumpWidget(
+      _host(
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () async => picked = await TierPicker.show(
+              context,
+              selected: SpeedTier.light,
+              unlocked: SpeedTier.light,
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Viteza trenului'), findsOneWidget);
+    expect(find.text('Se deblochează la 25 vagoane pe Ușor'), findsOneWidget);
+    expect(find.text('Se deblochează la 25 vagoane pe Mediu'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('tier-medium')));
+    await tester.pumpAndSettle();
+    expect(find.text('Viteza trenului'), findsOneWidget);
+    expect(picked, isNull);
+
+    await tester.tap(find.byKey(const ValueKey('tier-veryEasy')));
+    await tester.pumpAndSettle();
+    expect(picked, SpeedTier.veryEasy);
   });
 }

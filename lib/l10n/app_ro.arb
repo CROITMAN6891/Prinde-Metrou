@@ -9,6 +9,7 @@
   "languageNameRomanian": "RO",
   "pausedTitle": "Pauză",
   "tapToContinue": "Atinge pentru a continua",
+  "tierVeryEasy": "Foarte ușor",
   "tierLight": "Ușor",
   "tierMedium": "Mediu",
   "tierHard": "Greu",
@@ -22,5 +23,7 @@
   "celebrateLegend": "Legendă!",
   "skinPickerTitle": "Culoarea trenului",
   "skinLocked": "Se deblochează la {count} vagoane",
-  "skinUnlocked": "Culoare nouă de tren deblocată!"
+  "skinUnlocked": "Culoare nouă de tren deblocată!",
+  "tierPickerTitle": "Viteza trenului",
+  "tierLocked": "Se deblochează la {count} vagoane pe {tier}"
 }

@@ -16,7 +16,7 @@ enum GamePhase {
 }
 
 class GameState extends ChangeNotifier {
-  GameState({GridSize? gridSize, this.tier = SpeedTier.light})
+  GameState({GridSize? gridSize, this.tier = SpeedTier.veryEasy})
       : gridSize = gridSize ?? GameConstants.gridSize {
     _reset();
   }
@@ -117,6 +117,11 @@ class GameState extends ChangeNotifier {
     if (phase != GamePhase.choosingTier) return;
     if (advance) tier = tier.next ?? tier;
     phase = GamePhase.playing;
+    notifyListeners();
+  }
+
+  void selectTier(SpeedTier newTier) {
+    tier = newTier;
     notifyListeners();
   }
 

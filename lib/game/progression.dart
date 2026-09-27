@@ -3,6 +3,7 @@
 const int tierMilestoneInterval = 25;
 
 enum SpeedTier {
+  veryEasy(Duration(milliseconds: 450)),
   light(Duration(milliseconds: 260)),
   medium(Duration(milliseconds: 200)),
   hard(Duration(milliseconds: 150));
@@ -10,6 +11,9 @@ enum SpeedTier {
   const SpeedTier(this.tickInterval);
 
   final Duration tickInterval;
+
+  /// The tier before this one, or `null` at the slowest speed.
+  SpeedTier? get previous => index > 0 ? SpeedTier.values[index - 1] : null;
 
   /// The tier after this one, or `null` at the top speed.
   SpeedTier? get next =>

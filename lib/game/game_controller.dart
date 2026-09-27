@@ -7,6 +7,7 @@ import '../core/constants.dart';
 import '../core/grid.dart';
 import 'game_state.dart';
 import 'progress_store.dart';
+import 'progression.dart';
 
 class GameController {
   GameController(this.gameState, {this.progressStore});
@@ -38,6 +39,13 @@ class GameController {
     gameState.chooseTier(advance: advance);
     if (advance) progressStore?.saveTier(gameState.tier);
     start();
+  }
+
+  /// Switches speed mid-run (from the speed picker); the score carries on.
+  void selectTier(SpeedTier tier) {
+    gameState.selectTier(tier);
+    progressStore?.saveTier(tier);
+    if (!gameState.isPaused && gameState.phase == GamePhase.playing) start();
   }
 
   /// Freezes the train exactly where it is. Safe to call repeatedly.

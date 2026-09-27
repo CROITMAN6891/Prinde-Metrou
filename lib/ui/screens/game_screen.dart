@@ -17,6 +17,7 @@ import '../widgets/metro_grid.dart';
 import '../widgets/pause_overlay.dart';
 import '../widgets/skin_picker.dart';
 import '../widgets/tier_choice_overlay.dart';
+import '../widgets/tier_picker.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({
@@ -132,6 +133,19 @@ class _GameScreenState extends State<GameScreen>
     widget.progressStore.saveSkin(chosen);
   }
 
+  /// Leaves the game paused afterwards, like the skin picker, so the player
+  /// resumes on their own at the new speed.
+  Future<void> _openTierPicker() async {
+    _gameController.pause();
+    final chosen = await TierPicker.show(
+      context,
+      selected: _gameState.tier,
+      unlocked: widget.progressStore.unlockedTier,
+    );
+    if (!mounted || chosen == null) return;
+    _gameController.selectTier(chosen);
+  }
+
   /// Waits [duration], then holds for as long as the game is paused, so a
   /// timed sequence never advances while the app is in the background.
   Future<void> _delayRespectingPause(Duration duration) async {
@@ -160,14 +174,29 @@ class _GameScreenState extends State<GameScreen>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  SizedBox(
-                    width: 48, // balances the switcher's width
-                    child: IconButton(
-                      tooltip: l10n.skinPickerTitle,
-                      icon: const Icon(Icons.palette_outlined),
-                      color: MetroTheme.wagonColor,
-                      onPressed: _openSkinPicker,
-                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: l10n.skinPickerTitle,
+                        icon: const Icon(Icons.palette_outlined),
+                        color: MetroTheme.wagonColor,
+                        onPressed: _openSkinPicker,
+                      ),
+                      AnimatedBuilder(
+                        animation: _gameState,
+                        builder: (context, _) => IconButton(
+                          tooltip: l10n.tierPickerTitle,
+                          icon: const Icon(Icons.speed),
+                          color: MetroTheme.wagonColor,
+                          // The milestone box is already a speed choice.
+                          onPressed:
+                              _gameState.phase == GamePhase.choosingTier
+                              ? null
+                              : _openTierPicker,
+                        ),
+                      ),
+                    ],
                   ),
                   AnimatedBuilder(
                     animation: _gameState,

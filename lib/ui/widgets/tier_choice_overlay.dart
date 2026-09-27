@@ -6,6 +6,7 @@ import '../theme/metro_theme.dart';
 
 extension SpeedTierLabel on SpeedTier {
   String label(AppLocalizations l10n) => switch (this) {
+    SpeedTier.veryEasy => l10n.tierVeryEasy,
     SpeedTier.light => l10n.tierLight,
     SpeedTier.medium => l10n.tierMedium,
     SpeedTier.hard => l10n.tierHard,
