@@ -628,6 +628,52 @@ void main() {
       expect(state.lastCollisionSide, CollisionSide.self);
     });
 
+    GameState blockedExitGame() {
+      final state = plainGame(const GridSize(columns: 9, rows: 9));
+      final entry = state.head.moved(Direction.right);
+      final exit = state.head.moved(Direction.left);
+      state.segments = [state.head, exit, exit.moved(Direction.left)];
+      state.portals = [entry, exit];
+      state.stations.addAll(state.portals);
+      state.wagon = const GridPosition(8, 8);
+      return state;
+    }
+
+    test('a blocked exit is flagged through the grace tick and the crash',
+        () {
+      final state = blockedExitGame();
+      final exit = state.portals.last;
+
+      state.tick();
+      expect(state.blockedPortalExit, exit);
+      state.tick();
+      expect(state.phase, GamePhase.colliding);
+      expect(state.blockedPortalExit, exit);
+
+      state.reset();
+      expect(state.blockedPortalExit, isNull);
+    });
+
+    test('turning away during the grace tick clears the blocked exit', () {
+      final state = blockedExitGame();
+
+      state.tick();
+      state.queueDirection(Direction.down);
+      state.tick();
+
+      expect(state.phase, GamePhase.playing);
+      expect(state.blockedPortalExit, isNull);
+    });
+
+    test('only a portal exit is flagged, not a wall or the body ahead', () {
+      final state = plainGame(const GridSize(columns: 5, rows: 5));
+      for (var i = 0; i < 10 && state.phase == GamePhase.playing; i++) {
+        state.tick();
+      }
+      expect(state.phase, GamePhase.colliding);
+      expect(state.blockedPortalExit, isNull);
+    });
+
     test('the head may take the cell the tail is leaving', () {
       final state = plainGame(const GridSize(columns: 9, rows: 9));
       // A 2x2 loop: the head at (4, 4) turns up into (3, 4), where the

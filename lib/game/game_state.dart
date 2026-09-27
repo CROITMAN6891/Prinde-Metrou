@@ -42,6 +42,11 @@ class GameState extends ChangeNotifier {
   /// pays out once, so a station can't be farmed by looping through it.
   final Set<GridPosition> claimedStations = {};
 
+  /// The exit portal the head would have come out of, while the train
+  /// holds or crashes because its own body is in the way there. The
+  /// obstacle is across the grid from the head, so the grid flags it.
+  GridPosition? blockedPortalExit;
+
   /// Whether the latest +1 came from a station rather than a wagon.
   bool lastGainWasBonus = false;
 
@@ -105,14 +110,18 @@ class GameState extends ChangeNotifier {
         : null;
 
     if (hit != null) {
+      blockedPortalExit =
+          hit == CollisionSide.self && entered != newHead ? newHead : null;
       if (_inGraceTick) {
         _collide(hit);
       } else {
         _inGraceTick = true;
+        notifyListeners();
       }
       return;
     }
     _inGraceTick = false;
+    blockedPortalExit = null;
 
     segments.insert(0, newHead);
     if (grows) {
@@ -186,6 +195,7 @@ class GameState extends ChangeNotifier {
     stations = [];
     portals = [];
     claimedStations.clear();
+    blockedPortalExit = null;
     lastGainWasBonus = false;
     _spawnWagon();
     _placeStations();

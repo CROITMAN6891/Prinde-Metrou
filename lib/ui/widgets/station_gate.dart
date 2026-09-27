@@ -15,6 +15,7 @@ class StationGate extends StatelessWidget {
     required this.label,
     this.portal = false,
     this.claimed = false,
+    this.blocked = false,
   });
 
   final double cellSize;
@@ -27,6 +28,10 @@ class StationGate extends StatelessWidget {
   /// Its bonus is already taken this round: the board goes grey and blank,
   /// so the player can tell at a glance which station still pays out.
   final bool claimed;
+
+  /// The train's own body is in this exit portal while the head tries to
+  /// come out of it: the gate flashes red to show what stopped the train.
+  final bool blocked;
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +73,48 @@ class StationGate extends StatelessWidget {
                   ),
           ),
         ),
+        if (blocked) Positioned.fill(child: _RedFlash(cellSize: cellSize)),
       ],
+    );
+  }
+}
+
+class _RedFlash extends StatefulWidget {
+  const _RedFlash({required this.cellSize});
+
+  final double cellSize;
+
+  @override
+  State<_RedFlash> createState() => _RedFlashState();
+}
+
+class _RedFlashState extends State<_RedFlash>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 180),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _pulse,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0x99FF3B30),
+          borderRadius: BorderRadius.circular(widget.cellSize * 0.12),
+          border: Border.all(
+            color: const Color(0xFFFF3B30),
+            width: widget.cellSize * 0.06,
+          ),
+        ),
+      ),
     );
   }
 }

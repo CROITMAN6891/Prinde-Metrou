@@ -123,6 +123,7 @@ class MetroGrid extends StatelessWidget {
                               : stationLabel,
                           portal: gameState.portals.contains(station),
                           claimed: gameState.claimedStations.contains(station),
+                          blocked: station == gameState.blockedPortalExit,
                         ),
                       ),
                   ],
