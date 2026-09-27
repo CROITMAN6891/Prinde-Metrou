@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prinde_metrou/core/grid.dart';
@@ -387,6 +388,160 @@ void main() {
 
       store.recordScore(25);
       expect((await ProgressStore.load()).skin, legend);
+    });
+  });
+
+  group('Stations', () {
+    test('two stations sit on cells free of the train, wagon and each other',
+        () {
+      for (var run = 0; run < 50; run++) {
+        final state = GameState();
+        expect(state.stations, hasLength(2));
+        expect(state.stations.toSet(), hasLength(2));
+        for (final station in state.stations) {
+          expect(station.isInside(state.gridSize), isTrue);
+          expect(state.segments, isNot(contains(station)));
+          expect(station, isNot(state.wagon));
+        }
+      }
+    });
+
+    test('stations stay put while wagons are collected', () {
+      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      final stations = List.of(state.stations);
+      state.stations
+        ..clear()
+        ..addAll(stations);
+      state.wagon = state.head.moved(Direction.right);
+      state.tick();
+
+      expect(state.score, 1);
+      expect(state.stations, stations);
+    });
+
+    test('stations move to new cells on each new chance', () {
+      final state = GameState();
+      final first = List.of(state.stations);
+      var moved = false;
+      // Random placement could repeat once by chance; not five times.
+      for (var i = 0; i < 5 && !moved; i++) {
+        state.reset();
+        moved = !listEquals(state.stations, first);
+      }
+      expect(moved, isTrue);
+    });
+
+    test('the train runs through a station like any free cell', () {
+      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      final ahead = state.head.moved(Direction.right);
+      state.stations
+        ..clear()
+        ..add(ahead);
+      state.wagon = const GridPosition(0, 0);
+
+      state.tick();
+
+      expect(state.phase, GamePhase.playing);
+      expect(state.head, ahead);
+    });
+
+    test('the first pass through a station is worth a wagon', () {
+      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      final ahead = state.head.moved(Direction.right);
+      state.stations
+        ..clear()
+        ..add(ahead);
+      state.wagon = const GridPosition(0, 0);
+
+      state.tick();
+
+      expect(state.score, 1);
+      expect(state.segments, hasLength(2));
+      expect(state.lastGainWasBonus, isTrue);
+      expect(state.claimedStations, {ahead});
+      expect(state.wagon, const GridPosition(0, 0)); // no new wagon spawned
+    });
+
+    test('passing through the same station again pays nothing', () {
+      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      final station = state.head.moved(Direction.right);
+      state.stations
+        ..clear()
+        ..add(station);
+      state.wagon = const GridPosition(0, 0);
+      state.tick(); // bonus
+
+      // Loop back round onto the station: down, left, up, right.
+      for (final turn in [
+        Direction.down,
+        Direction.left,
+        Direction.up,
+        Direction.right,
+      ]) {
+        state.queueDirection(turn);
+        state.tick();
+      }
+
+      expect(state.head, station);
+      expect(state.score, 1);
+      expect(state.segments, hasLength(2));
+    });
+
+    test('each station pays out once per round, then again next round', () {
+      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      state.stations
+        ..clear()
+        ..add(state.head.moved(Direction.right));
+      state.wagon = const GridPosition(0, 0);
+      state.tick();
+      expect(state.claimedStations, hasLength(1));
+
+      state.reset();
+
+      expect(state.claimedStations, isEmpty);
+      expect(state.lastGainWasBonus, isFalse);
+    });
+
+    test('a bonus that reaches a milestone opens the tier choice', () {
+      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      state.score = 24;
+      state.stations
+        ..clear()
+        ..add(state.head.moved(Direction.right));
+      state.wagon = const GridPosition(0, 0);
+
+      state.tick();
+
+      expect(state.score, 25);
+      expect(state.phase, GamePhase.choosingTier);
+    });
+
+    test('collecting a wagon is not flagged as a bonus', () {
+      final state = GameState(gridSize: const GridSize(columns: 9, rows: 9));
+      state.stations.clear();
+      state.wagon = state.head.moved(Direction.right);
+
+      state.tick();
+
+      expect(state.score, 1);
+      expect(state.lastGainWasBonus, isFalse);
+    });
+
+    test('a new wagon never lands on a station', () {
+      final state = GameState(gridSize: const GridSize(columns: 3, rows: 3));
+      // Once the train grows onto (1, 2), only (0, 2) is neither train
+      // nor station.
+      state.segments = [const GridPosition(1, 1)];
+      state.stations
+        ..clear()
+        ..addAll(const [
+          GridPosition(0, 0), GridPosition(0, 1), GridPosition(1, 0),
+          GridPosition(2, 0), GridPosition(2, 1), GridPosition(2, 2),
+        ]);
+      state.wagon = const GridPosition(1, 2);
+      state.tick(); // collects it and spawns the next
+
+      expect(state.wagon, const GridPosition(0, 2));
     });
   });
 

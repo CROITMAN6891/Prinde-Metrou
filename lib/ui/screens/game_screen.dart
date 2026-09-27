@@ -76,7 +76,10 @@ class _GameScreenState extends State<GameScreen>
   void _onGameStateChanged() {
     if (_gameState.score > _lastScore) {
       final unlocked = widget.progressStore.recordScore(_gameState.score);
-      final celebration = celebrationFor(_gameState.score);
+      // A milestone outranks the station bonus that reached it.
+      final celebration =
+          celebrationFor(_gameState.score) ??
+          (_gameState.lastGainWasBonus ? Celebration.bonus : null);
       if (celebration != null) {
         _showCelebration(celebration, unlockedSkin: unlocked.isNotEmpty);
       }
@@ -235,6 +238,7 @@ class _GameScreenState extends State<GameScreen>
                         gameState: _gameState,
                         collisionAnimation: _collisionController,
                         skin: _skin,
+                        stationLabel: l10n.stationLabel,
                       ),
                     ),
                     CollisionOverlay(kind: _collisionMessage),

@@ -100,6 +100,10 @@
   "@celebrateIncredible": {
     "description": "Flashed briefly when the run reaches 15 wagons."
   },
+  "celebrateBonus": "Bonus!",
+  "@celebrateBonus": {
+    "description": "Flashed when the train's head first runs through a station in a round, which counts as a wagon."
+  },
   "celebrateLegend": "Legend!",
   "@celebrateLegend": {
     "description": "Flashed briefly at every 25-wagon milestone (25, 50, 75...)."

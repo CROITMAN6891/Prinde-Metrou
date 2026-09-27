@@ -5,6 +5,7 @@ import '../../game/game_state.dart';
 import '../../game/train_layout.dart';
 import '../../game/train_skin.dart';
 import '../theme/metro_theme.dart';
+import 'station_gate.dart';
 import 'train_painter.dart';
 import 'train_segment.dart';
 
@@ -14,11 +15,15 @@ class MetroGrid extends StatelessWidget {
     required this.gameState,
     required this.collisionAnimation,
     required this.skin,
+    required this.stationLabel,
   });
 
   final GameState gameState;
   final Animation<double> collisionAnimation;
   final TrainSkin skin;
+
+  /// Name shown on each station's sign ("STAȚIE" / "STATION").
+  final String stationLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -91,6 +96,19 @@ class MetroGrid extends StatelessWidget {
                           collisionProgress: colliding
                               ? collisionAnimation.value
                               : null,
+                        ),
+                      ),
+                    // Over the train, so it runs through the gates.
+                    for (final station in gameState.stations)
+                      Positioned(
+                        left: station.col * cellSize,
+                        top: station.row * cellSize,
+                        width: cellSize,
+                        height: cellSize,
+                        child: StationGate(
+                          cellSize: cellSize,
+                          label: stationLabel,
+                          claimed: gameState.claimedStations.contains(station),
                         ),
                       ),
                   ],

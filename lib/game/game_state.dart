@@ -29,6 +29,17 @@ class GameState extends ChangeNotifier {
   Direction? _queuedDirection;
   late GridPosition wagon;
 
+  /// The train runs through these cells like any other. Placed once per
+  /// round, so they stay put while wagons are collected.
+  late List<GridPosition> stations;
+
+  /// Stations whose bonus the head has already taken this round; each
+  /// pays out once, so a station can't be farmed by looping through it.
+  final Set<GridPosition> claimedStations = {};
+
+  /// Whether the latest +1 came from a station rather than a wagon.
+  bool lastGainWasBonus = false;
+
   /// Set while the train holds for one tick in front of an obstacle, so a
   /// swipe that lands just too late can still steer it clear.
   bool _inGraceTick = false;
@@ -84,11 +95,16 @@ class GameState extends ChangeNotifier {
     }
     _inGraceTick = false;
 
-    final grew = newHead == wagon;
+    final collected = newHead == wagon;
+    // Worth a wagon, attached like one, so the count still matches the
+    // wagons behind the head.
+    final bonus =
+        stations.contains(newHead) && claimedStations.add(newHead);
     segments.insert(0, newHead);
-    if (grew) {
+    if (collected || bonus) {
       score += 1;
-      _spawnWagon();
+      lastGainWasBonus = bonus;
+      if (collected) _spawnWagon();
       if (isTierMilestone(score) && tier.next != null) {
         phase = GamePhase.choosingTier;
       }
@@ -152,15 +168,32 @@ class GameState extends ChangeNotifier {
     score = 0;
     phase = GamePhase.playing;
     lastCollisionSide = null;
+    stations = [];
+    claimedStations.clear();
+    lastGainWasBonus = false;
     _spawnWagon();
+    _placeStations();
   }
 
+  /// Keeps off the stations too, so a wagon never sits under a sign.
   void _spawnWagon() {
-    final freeCells = <GridPosition>[
-      for (var r = 0; r < gridSize.rows; r++)
-        for (var c = 0; c < gridSize.columns; c++)
-          if (!segments.contains(GridPosition(r, c))) GridPosition(r, c),
-    ];
+    final freeCells = _freeCells();
     wagon = freeCells[_random.nextInt(freeCells.length)];
   }
+
+  void _placeStations() {
+    for (var i = 0; i < GameConstants.stationCount; i++) {
+      final freeCells = _freeCells()..remove(wagon);
+      stations.add(freeCells[_random.nextInt(freeCells.length)]);
+    }
+  }
+
+  /// Cells holding neither the train nor a station.
+  List<GridPosition> _freeCells() => [
+    for (var r = 0; r < gridSize.rows; r++)
+      for (var c = 0; c < gridSize.columns; c++)
+        if (!segments.contains(GridPosition(r, c)) &&
+            !stations.contains(GridPosition(r, c)))
+          GridPosition(r, c),
+  ];
 }

@@ -81,6 +81,7 @@ void main() {
             gameState: state,
             collisionAnimation: const AlwaysStoppedAnimation(0),
             skin: TrainSkin.classic,
+            stationLabel: 'STATION',
           ),
         ),
       ),

@@ -26,6 +26,7 @@ class CelebrationOverlay extends StatelessWidget {
       Celebration.perfect => l10n.celebratePerfect,
       Celebration.incredible => l10n.celebrateIncredible,
       Celebration.legend => l10n.celebrateLegend,
+      Celebration.bonus => l10n.celebrateBonus,
       null => null,
     };
 
