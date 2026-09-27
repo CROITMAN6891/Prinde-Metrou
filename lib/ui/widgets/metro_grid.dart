@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../core/grid.dart';
 import '../../game/game_state.dart';
+import '../../game/train_layout.dart';
 import '../../game/train_skin.dart';
 import '../theme/metro_theme.dart';
+import 'train_painter.dart';
 import 'train_segment.dart';
 
 class MetroGrid extends StatelessWidget {
@@ -30,6 +33,8 @@ class MetroGrid extends StatelessWidget {
             final gridWidth = cellSize * gameState.gridSize.columns;
             final gridHeight = cellSize * gameState.gridSize.rows;
             final colliding = gameState.phase == GamePhase.colliding;
+            final segments = gameState.segments;
+            final headings = segmentHeadings(segments, gameState.direction);
 
             return Center(
               child: SizedBox(
@@ -50,24 +55,33 @@ class MetroGrid extends StatelessWidget {
                       top: gameState.wagon.row * cellSize,
                       width: cellSize,
                       height: cellSize,
+                      // A smaller copy of a real wagon, loose on the track.
                       child: Padding(
-                        padding: const EdgeInsets.all(3),
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
+                        padding: EdgeInsets.all(cellSize * 0.12),
+                        child: CustomPaint(
+                          painter: TrainPiecePainter(
+                            isHead: false,
+                            heading: Direction.right,
                             color: MetroTheme.wagonColor,
-                            shape: BoxShape.circle,
+                            coupler: false,
                           ),
                         ),
                       ),
                     ),
-                    for (var i = 0; i < gameState.segments.length; i++)
+                    // Back to front, so the head's beams paint over the
+                    // wagons rather than under them.
+                    for (var i = segments.length - 1; i >= 0; i--)
                       Positioned(
-                        left: gameState.segments[i].col * cellSize,
-                        top: gameState.segments[i].row * cellSize,
+                        left: segments[i].col * cellSize,
+                        top: segments[i].row * cellSize,
                         width: cellSize,
                         height: cellSize,
                         child: TrainSegment(
                           isHead: i == 0,
+                          // Recomputed every frame from the list, so the
+                          // position lights follow whichever piece is last.
+                          isTail: i == segments.length - 1,
+                          heading: headings[i],
                           segmentIndex: i,
                           cellSize: cellSize,
                           skin: skin,

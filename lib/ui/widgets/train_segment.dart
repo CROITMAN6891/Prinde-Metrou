@@ -2,9 +2,10 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../../core/grid.dart';
 import '../../game/collision.dart';
 import '../../game/train_skin.dart';
-import '../theme/metro_theme.dart';
+import 'train_painter.dart';
 
 /// Renders a single train segment (head or wagon) and, while a collision
 /// is in progress, applies the tilt (left/right) or tumble (top/bottom)
@@ -13,6 +14,8 @@ class TrainSegment extends StatelessWidget {
   const TrainSegment({
     super.key,
     required this.isHead,
+    required this.isTail,
+    required this.heading,
     required this.segmentIndex,
     required this.cellSize,
     this.skin = TrainSkin.classic,
@@ -21,6 +24,8 @@ class TrainSegment extends StatelessWidget {
   });
 
   final bool isHead;
+  final bool isTail;
+  final Direction heading;
   final int segmentIndex;
   final double cellSize;
   final TrainSkin skin;
@@ -32,14 +37,16 @@ class TrainSegment extends StatelessWidget {
     return Transform(
       transform: _buildTransform(),
       alignment: Alignment.center,
-      child: Padding(
-        padding: const EdgeInsets.all(1.5),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isHead ? skin.head : skin.body,
-            borderRadius: BorderRadius.circular(cellSize * 0.25),
-            border: Border.all(color: MetroTheme.gridLine, width: 1),
-          ),
+      child: CustomPaint(
+        size: Size.square(cellSize),
+        painter: TrainPiecePainter(
+          isHead: isHead,
+          heading: heading,
+          // Only the last piece: it has nothing behind to couple to, and it
+          // carries the position lights.
+          coupler: !isTail,
+          tailLights: isTail,
+          color: isHead ? skin.head : skin.body,
         ),
       ),
     );
