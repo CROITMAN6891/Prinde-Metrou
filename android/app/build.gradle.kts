@@ -58,6 +58,9 @@ android {
             } else {
                 signingConfigs.getByName("upload")
             }
+            // R8 is enabled for release by the Flutter plugin; these rules
+            // add to its defaults rather than replace them.
+            proguardFiles("proguard-rules.pro")
         }
     }
 }
