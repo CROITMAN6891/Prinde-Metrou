@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../ads/consent_manager.dart';
 import '../../core/constants.dart';
 import '../../game/game_controller.dart';
 import '../../game/game_state.dart';
@@ -38,6 +39,7 @@ class _GameScreenState extends State<GameScreen>
   late final GameState _gameState;
   late final GameController _gameController;
   late final AnimationController _collisionController;
+  final _consent = ConsentManager.instance;
 
   CollisionMessageKind? _collisionMessage;
   Celebration? _celebration;
@@ -264,10 +266,19 @@ class _GameScreenState extends State<GameScreen>
                     ),
                     Positioned.fill(
                       child: AnimatedBuilder(
-                        animation: _gameState,
+                        animation: Listenable.merge([
+                          _gameState,
+                          _consent.privacyOptionsRequired,
+                        ]),
                         builder: (context, _) => PauseOverlay(
                           visible: _gameState.isPaused,
                           onResume: _gameController.resume,
+                          // Only where the user must be able to change
+                          // their ad consent (e.g. EEA/UK).
+                          onPrivacyOptions:
+                              _consent.privacyOptionsRequired.value
+                              ? _consent.showPrivacyOptionsForm
+                              : null,
                         ),
                       ),
                     ),

@@ -10,10 +10,14 @@ class PauseOverlay extends StatelessWidget {
     super.key,
     required this.visible,
     required this.onResume,
+    this.onPrivacyOptions,
   });
 
   final bool visible;
   final VoidCallback onResume;
+
+  /// Opens the ad consent privacy options; the button shows only when set.
+  final VoidCallback? onPrivacyOptions;
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +58,17 @@ class PauseOverlay extends StatelessWidget {
                       fontSize: 16,
                     ),
                   ),
+                  if (onPrivacyOptions != null) ...[
+                    const SizedBox(height: 24),
+                    TextButton.icon(
+                      onPressed: onPrivacyOptions,
+                      icon: const Icon(Icons.privacy_tip_outlined),
+                      label: Text(l10n.privacyOptions),
+                      style: TextButton.styleFrom(
+                        foregroundColor: MetroTheme.scoreText,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

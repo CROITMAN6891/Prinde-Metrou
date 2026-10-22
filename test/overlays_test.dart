@@ -25,6 +25,27 @@ void main() {
     expect(find.text('Atinge pentru a continua'), findsOneWidget);
     await tester.tap(find.text('Pauză'));
     expect(resumed, isTrue);
+    expect(find.text('Opțiuni de confidențialitate'), findsNothing);
+  });
+
+  testWidgets('pause overlay privacy options button opens without resuming', (
+    tester,
+  ) async {
+    var resumed = false;
+    var opened = false;
+    await tester.pumpWidget(
+      _host(
+        PauseOverlay(
+          visible: true,
+          onResume: () => resumed = true,
+          onPrivacyOptions: () => opened = true,
+        ),
+        locale: const Locale('en'),
+      ),
+    );
+    await tester.tap(find.text('Privacy options'));
+    expect(opened, isTrue);
+    expect(resumed, isFalse);
   });
 
   testWidgets('tier choice offers next tier and reports the choice', (

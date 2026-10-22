@@ -45,6 +45,10 @@
   "@tapToContinue": {
     "description": "Hint under the pause title; tapping the grid resumes the game."
   },
+  "privacyOptions": "Privacy options",
+  "@privacyOptions": {
+    "description": "Button in the pause overlay that reopens the ad consent form; shown only where a consent choice is required (e.g. EEA/UK)."
+  },
   "tierVeryEasy": "Very Easy",
   "@tierVeryEasy": {
     "description": "Name of the slowest speed tier, the one every new player starts on."
