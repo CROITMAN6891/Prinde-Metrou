@@ -25,10 +25,14 @@ class GameScreen extends StatefulWidget {
     super.key,
     required this.localeController,
     required this.progressStore,
+    this.consentManager,
   });
 
   final LocaleController localeController;
   final ProgressStore progressStore;
+
+  /// Defaults to [ConsentManager.instance]; tests pass their own.
+  final ConsentManager? consentManager;
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -39,7 +43,8 @@ class _GameScreenState extends State<GameScreen>
   late final GameState _gameState;
   late final GameController _gameController;
   late final AnimationController _collisionController;
-  final _consent = ConsentManager.instance;
+  late final ConsentManager _consent =
+      widget.consentManager ?? ConsentManager.instance;
 
   CollisionMessageKind? _collisionMessage;
   Celebration? _celebration;
@@ -63,7 +68,16 @@ class _GameScreenState extends State<GameScreen>
     );
     _gameState.addListener(_onGameStateChanged);
     WidgetsBinding.instance.addObserver(this);
+    _consent.formShowing.addListener(_onConsentFormChanged);
     _gameController.start();
+    _onConsentFormChanged();
+  }
+
+  /// Freezes the train under a consent form. Closing the form deliberately
+  /// does NOT unpause, as on returning to the app: the player taps the
+  /// pause overlay when ready.
+  void _onConsentFormChanged() {
+    if (_consent.formShowing.value) _gameController.pause();
   }
 
   @override
@@ -161,6 +175,7 @@ class _GameScreenState extends State<GameScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _consent.formShowing.removeListener(_onConsentFormChanged);
     _gameState.removeListener(_onGameStateChanged);
     _gameController.dispose();
     _collisionController.dispose();

@@ -9,6 +9,10 @@ abstract class ConsentPlatform {
   /// Completes when the consent info is up to date; throws on failure.
   Future<void> requestConsentInfoUpdate(ConsentRequestParameters params);
 
+  /// The consent status from the last update; `required` means the consent
+  /// form is about to be shown.
+  Future<ConsentStatus> getConsentStatus();
+
   /// Returns the form error, or null if the form was shown or not needed.
   Future<FormError?> loadAndShowConsentFormIfRequired();
 
@@ -36,6 +40,10 @@ class GoogleConsentPlatform implements ConsentPlatform {
     );
     return done.future;
   }
+
+  @override
+  Future<ConsentStatus> getConsentStatus() =>
+      ConsentInformation.instance.getConsentStatus();
 
   @override
   Future<FormError?> loadAndShowConsentFormIfRequired() {
@@ -80,6 +88,10 @@ class ConsentManager {
   /// choice (the "Privacy options" button in the pause overlay).
   final ValueNotifier<bool> privacyOptionsRequired = ValueNotifier(false);
 
+  /// True while a consent or privacy options form is on screen, so the game
+  /// can pause under it.
+  final ValueNotifier<bool> formShowing = ValueNotifier(false);
+
   bool _mobileAdsInitialized = false;
   Future<void>? _gathering;
 
@@ -92,6 +104,9 @@ class ConsentManager {
   Future<void> _gather() async {
     try {
       await platform.requestConsentInfoUpdate(_requestParameters());
+      // Only when the form will really show: otherwise every launch outside
+      // the EEA would pause the game for nothing.
+      if (await _consentRequired()) formShowing.value = true;
       final formError = await platform.loadAndShowConsentFormIfRequired();
       if (formError != null) {
         debugPrint('Consent form error: ${formError.message}');
@@ -100,13 +115,26 @@ class ConsentManager {
       // A failed update or form still leaves any consent stored from a
       // previous launch, which canRequestAds() below reflects.
       debugPrint('Consent gathering failed: $error');
+    } finally {
+      formShowing.value = false;
     }
     await _refresh();
+  }
+
+  /// False on failure, so a broken status check never blocks the form.
+  Future<bool> _consentRequired() async {
+    try {
+      return await platform.getConsentStatus() == ConsentStatus.required;
+    } catch (error) {
+      debugPrint('Consent status failed: $error');
+      return false;
+    }
   }
 
   /// Opens the UMP privacy options form so the user can change their choice,
   /// then re-reads what it allows. Never throws.
   Future<void> showPrivacyOptionsForm() async {
+    formShowing.value = true;
     try {
       final formError = await platform.showPrivacyOptionsForm();
       if (formError != null) {
@@ -114,6 +142,8 @@ class ConsentManager {
       }
     } catch (error) {
       debugPrint('Privacy options form failed: $error');
+    } finally {
+      formShowing.value = false;
     }
     await _refresh();
   }

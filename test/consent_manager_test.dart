@@ -8,11 +8,17 @@ class _FakePlatform implements ConsentPlatform {
   bool canRequest = true;
   bool updateFails = false;
   bool canRequestThrows = false;
+  bool statusThrows = false;
+  bool formThrows = false;
   FormError? formError;
+  ConsentStatus consentStatus = ConsentStatus.notRequired;
   PrivacyOptionsRequirementStatus privacyStatus =
       PrivacyOptionsRequirementStatus.notRequired;
   final calls = <String>[];
   int initializeCount = 0;
+
+  /// Runs while either form is "on screen", to observe the manager then.
+  VoidCallback? whileFormShows;
 
   @override
   Future<void> requestConsentInfoUpdate(ConsentRequestParameters params) async {
@@ -23,8 +29,16 @@ class _FakePlatform implements ConsentPlatform {
   }
 
   @override
+  Future<ConsentStatus> getConsentStatus() async {
+    if (statusThrows) throw StateError('channel');
+    return consentStatus;
+  }
+
+  @override
   Future<FormError?> loadAndShowConsentFormIfRequired() async {
     calls.add('form');
+    whileFormShows?.call();
+    if (formThrows) throw StateError('form');
     return formError;
   }
 
@@ -42,7 +56,9 @@ class _FakePlatform implements ConsentPlatform {
   @override
   Future<FormError?> showPrivacyOptionsForm() async {
     calls.add('privacyForm');
-    return null;
+    whileFormShows?.call();
+    if (formThrows) throw StateError('form');
+    return formError;
   }
 
   @override
@@ -125,6 +141,77 @@ void main() {
     platform.canRequest = false;
     await manager.showPrivacyOptionsForm();
     expect(manager.adsAllowed.value, isFalse);
+  });
+
+  group('formShowing', () {
+    late List<bool> seenWhileShowing;
+
+    setUp(() {
+      seenWhileShowing = [];
+      platform.whileFormShows = () =>
+          seenWhileShowing.add(manager.formShowing.value);
+    });
+
+    test('stays false when consent is not required', () async {
+      final changes = <bool>[];
+      manager.formShowing.addListener(
+        () => changes.add(manager.formShowing.value),
+      );
+      await manager.gatherConsent();
+      expect(seenWhileShowing, [false]);
+      expect(changes, isEmpty);
+      expect(manager.formShowing.value, isFalse);
+    });
+
+    test('stays false when the status check throws, and the form still '
+        'runs', () async {
+      platform.statusThrows = true;
+      await manager.gatherConsent();
+      expect(platform.calls, contains('form'));
+      expect(seenWhileShowing, [false]);
+      expect(manager.formShowing.value, isFalse);
+    });
+
+    test('is true while the required form shows, false after', () async {
+      platform.consentStatus = ConsentStatus.required;
+      await manager.gatherConsent();
+      expect(seenWhileShowing, [true]);
+      expect(manager.formShowing.value, isFalse);
+    });
+
+    test('clears after a form error', () async {
+      platform.consentStatus = ConsentStatus.required;
+      platform.formError = FormError(errorCode: 2, message: 'form');
+      await manager.gatherConsent();
+      expect(seenWhileShowing, [true]);
+      expect(manager.formShowing.value, isFalse);
+    });
+
+    test('clears when the form throws', () async {
+      platform.consentStatus = ConsentStatus.required;
+      platform.formThrows = true;
+      await manager.gatherConsent();
+      expect(seenWhileShowing, [true]);
+      expect(manager.formShowing.value, isFalse);
+      expect(platform.calls, contains('canRequestAds'));
+    });
+
+    test('is true around the privacy options form, false after', () async {
+      await manager.showPrivacyOptionsForm();
+      expect(seenWhileShowing, [true]);
+      expect(manager.formShowing.value, isFalse);
+    });
+
+    test('clears when the privacy options form errors or throws', () async {
+      platform.formError = FormError(errorCode: 3, message: 'privacy');
+      await manager.showPrivacyOptionsForm();
+      expect(manager.formShowing.value, isFalse);
+
+      platform.formThrows = true;
+      await manager.showPrivacyOptionsForm();
+      expect(seenWhileShowing, [true, true]);
+      expect(manager.formShowing.value, isFalse);
+    });
   });
 
   testWidgets('banner renders nothing while ads are not allowed', (
